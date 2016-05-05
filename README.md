@@ -6,5 +6,5 @@ To run, simply clone this repo as a submodule within your Moai game or project's
 then include the files in your main.lua and import the exported spriter animation files as shown in the 
 sample project (https://github.com/sshukul/MoaiSpriter).
 
-Keeping the module separate as a git submodule will allow you to receive updates as newer Spriter 
-features are added.
+Keeping the module separate as a git submodule will allow you to receive updates directly in your game, 
+as newer Spriter features are added.
