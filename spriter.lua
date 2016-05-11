@@ -115,116 +115,159 @@ end
 
 function spriter(filename, deck, names)
     local anims = dofile ( filename )
-    curves = {}
-    texture = deck 
-    for anim, objects in orderedPairs ( anims ) do
-        --print("\n\nAdding animation " .. anim .. "\n\n")
-        
-        local animCurves = {}
-        for i, object in orderedPairs ( objects ) do
-            local numKeys = #object
-
-            -- Texture ID
-            local idCurve = MOAIAnimCurve.new ()
-            idCurve:reserveKeys ( numKeys )
-
-            -- Location
-            local xCurve = MOAIAnimCurve.new ()
-            xCurve:reserveKeys ( numKeys )
-
-            local yCurve = MOAIAnimCurve.new ()
-            yCurve:reserveKeys ( numKeys )
+    local curves = {}
+    local texture = deck
+    local meta = {}
+    for anim, objectsAndMeta in orderedPairs ( anims ) do
+      --print("\n\nAdding animation " .. anim .. "\n\n")
       
-            -- Z-Index
-            --local zCurve = MOAIAnimCurve.new ()
-            --zCurve:reserveKeys ( numKeys )  
-
-            -- Rotation
-            local rCurve = MOAIAnimCurve.new ()
-            rCurve:reserveKeys ( numKeys )
-
-            -- Scale
-            local sxCurve = MOAIAnimCurve.new ()
-            sxCurve:reserveKeys ( numKeys )
-
-            local syCurve = MOAIAnimCurve.new ()
-            syCurve:reserveKeys ( numKeys )
+      local objects = objectsAndMeta['objects']
+      if objectsAndMeta['meta'] ~= nil then
+        local animMeta = {}
+        animMeta['anim'] = anim
+        animMeta['meta'] = objectsAndMeta['meta']
+        table.insert(meta, animMeta)
+      end
       
-            -- Alpha
-            local aCurve = MOAIAnimCurve.new ()
-            aCurve:reserveKeys ( numKeys )
+      local animCurves = {}
+      for i, object in orderedPairs ( objects ) do
+        local numKeys = #object
 
-            -- Pivot
-            local pxCurve = MOAIAnimCurve.new ()
-            pxCurve:reserveKeys ( numKeys )
+        -- Texture ID
+        local idCurve = MOAIAnimCurve.new ()
+        idCurve:reserveKeys ( numKeys )
 
-            local pyCurve = MOAIAnimCurve.new ()
-            pyCurve:reserveKeys ( numKeys )
-      
-            local prevTexture = nil
-            local prevFrame = nil
-            for ii, frame in orderedPairs ( object ) do
-                if frame.texture then
-                    time = frame.time / 1000
-                    idCurve:setKey ( ii, time, names[frame.texture], MOAIEaseType.FLAT)
-                    idCurve.name = frame.texture
-                    xCurve:setKey  ( ii, time, frame.x, MOAIEaseType.LINEAR)
-                    yCurve:setKey  ( ii, time, frame.y, MOAIEaseType.LINEAR)
-          
-                    frame.angleWithSpin = frame.angle
-                    if prevFrame ~= nil then
-                        if frame.angle < prevFrame.angle and prevFrame.spin == 1 then
-                          frame.angleWithSpin = frame.angle + 360
-                        elseif frame.angle > prevFrame.angle and prevFrame.spin == -1 then
-                          frame.angleWithSpin = frame.angle - 360
-                        end
-                        
-                        if prevFrame.angleWithSpin >= 360 and prevFrame.angle < 360 then
-                          local numRotations = math.floor(math.abs(prevFrame.angleWithSpin / 360))
-                          if numRotations == 0 then
-                            numRotations = 1
-                          end
-                          frame.angleWithSpin = frame.angleWithSpin + (360 * numRotations)
-                        elseif prevFrame.angleWithSpin <= 0 and prevFrame.angle > 0 then
-                          local numRotations = math.floor(math.abs(prevFrame.angleWithSpin / 360)) + 1
-                          frame.angleWithSpin = frame.angleWithSpin - (360 * numRotations)
-                        end
-                    end
-                    if frame.alpha == nil then
-                        frame.alpha = 1
-                    end
+        -- Location
+        local xCurve = MOAIAnimCurve.new ()
+        xCurve:reserveKeys ( numKeys )
 
-                    rCurve:setKey  ( ii, time, frame.angleWithSpin, MOAIEaseType.LINEAR)                    
-                    sxCurve:setKey ( ii, time, frame.scale_x, MOAIEaseType.LINEAR)
-                    syCurve:setKey ( ii, time, frame.scale_y, MOAIEaseType.LINEAR)
-                    aCurve:setKey ( ii, time, frame.alpha, MOAIEaseType.LINEAR)
-                    pxCurve:setKey ( ii, time, frame.pivot_x, MOAIEaseType.LINEAR )
-                    pyCurve:setKey ( ii, time, frame.pivot_y, MOAIEaseType.LINEAR )
-                    prevTexture = frame.texture
-                    prevFrame = frame
+        local yCurve = MOAIAnimCurve.new ()
+        yCurve:reserveKeys ( numKeys )
+  
+        -- Z-Index
+        --local zCurve = MOAIAnimCurve.new ()
+        --zCurve:reserveKeys ( numKeys )  
+
+        -- Rotation
+        local rCurve = MOAIAnimCurve.new ()
+        rCurve:reserveKeys ( numKeys )
+
+        -- Scale
+        local sxCurve = MOAIAnimCurve.new ()
+        sxCurve:reserveKeys ( numKeys )
+
+        local syCurve = MOAIAnimCurve.new ()
+        syCurve:reserveKeys ( numKeys )
+  
+        -- Alpha
+        local aCurve = MOAIAnimCurve.new ()
+        aCurve:reserveKeys ( numKeys )
+
+        -- Pivot
+        local pxCurve = MOAIAnimCurve.new ()
+        pxCurve:reserveKeys ( numKeys )
+
+        local pyCurve = MOAIAnimCurve.new ()
+        pyCurve:reserveKeys ( numKeys )
+  
+        local prevTexture = nil
+        local prevFrame = nil
+        for ii, frame in orderedPairs ( object ) do
+          if frame.texture then
+            time = frame.time / 1000
+            idCurve:setKey ( ii, time, names[frame.texture], MOAIEaseType.FLAT)
+            idCurve.name = frame.texture
+            xCurve:setKey  ( ii, time, frame.x, MOAIEaseType.LINEAR)
+            yCurve:setKey  ( ii, time, frame.y, MOAIEaseType.LINEAR)
+  
+            frame.angleWithSpin = frame.angle
+            if prevFrame ~= nil then
+              if frame.angle < prevFrame.angle and prevFrame.spin == 1 then
+                frame.angleWithSpin = frame.angle + 360
+              elseif frame.angle > prevFrame.angle and prevFrame.spin == -1 then
+                frame.angleWithSpin = frame.angle - 360
+              end
+              
+              if prevFrame.angleWithSpin >= 360 and prevFrame.angle < 360 then
+                local numRotations = math.floor(math.abs(prevFrame.angleWithSpin / 360))
+                if numRotations == 0 then
+                  numRotations = 1
                 end
+                frame.angleWithSpin = frame.angleWithSpin + (360 * numRotations)
+              elseif prevFrame.angleWithSpin <= 0 and prevFrame.angle > 0 then
+                local numRotations = math.floor(math.abs(prevFrame.angleWithSpin / 360)) + 1
+                frame.angleWithSpin = frame.angleWithSpin - (360 * numRotations)
+              end
             end
-    
-            local curveSet = {}
+            if frame.alpha == nil then
+              frame.alpha = 1
+            end
 
-            curveSet.id = idCurve
-            curveSet.x = xCurve
-            curveSet.y = yCurve
-            curveSet.r = rCurve
-            curveSet.xs = sxCurve
-            curveSet.ys = syCurve
-            curveSet.a = aCurve
-            curveSet.px = pxCurve
-            curveSet.py = pyCurve
-            curveSet.priority = object[1].zindex
-            table.insert ( animCurves, i, curveSet )            
+            rCurve:setKey  ( ii, time, frame.angleWithSpin, MOAIEaseType.LINEAR)                    
+            sxCurve:setKey ( ii, time, frame.scale_x, MOAIEaseType.LINEAR)
+            syCurve:setKey ( ii, time, frame.scale_y, MOAIEaseType.LINEAR)
+            aCurve:setKey ( ii, time, frame.alpha, MOAIEaseType.LINEAR)
+            pxCurve:setKey ( ii, time, frame.pivot_x, MOAIEaseType.LINEAR )
+            pyCurve:setKey ( ii, time, frame.pivot_y, MOAIEaseType.LINEAR )
+            prevTexture = frame.texture
+            prevFrame = frame
+          end
         end
-        curves[anim] = animCurves
+
+        local curveSet = {}
+
+        curveSet.id = idCurve
+        curveSet.x = xCurve
+        curveSet.y = yCurve
+        curveSet.r = rCurve
+        curveSet.xs = sxCurve
+        curveSet.ys = syCurve
+        curveSet.a = aCurve
+        curveSet.px = pxCurve
+        curveSet.py = pyCurve
+        curveSet.priority = object[1].zindex
+        table.insert ( animCurves, i, curveSet )            
+      end
+      curves[anim] = animCurves
     end
     local sprite = {}
     sprite.curves = curves
     sprite.texture = texture
     sprite.createAnim = createAnim
 
-    return sprite
+    return sprite, meta
+end
+
+function getAnimTagsAtTime(meta, anim_name, time)
+  for i=1, table.getn(meta) do
+    local anim = meta[i]['anim']
+    local animMeta = meta[i]['meta']
+    if anim == anim_name then
+      local tagline = animMeta['tags']
+      if tagline ~= nil then
+        local prevTags = nil
+        for tagline_time, tags in orderedPairs ( tagline ) do
+          if tagline_time == time then
+            return tags
+          elseif tagline_time > time then
+            return prevTags
+          else 
+            prevTags = tags
+          end
+        end
+        return prevTags
+      end
+    end
+  end
+  return nil
+end
+  
+function animHasTagAtTime(meta, anim_name, time, tag_name) 
+  local tags = getAnimTagsAtTime(meta, anim_name, time)
+  for i, tag in orderedPairs ( tags ) do
+    if tag == tag_name then
+      return true
+    end 
+  end
+  return false
 end

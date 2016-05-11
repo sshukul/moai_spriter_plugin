@@ -1,5 +1,7 @@
 # moai_spriter_plugin
 
+Current version 1.0.1
+
 The Lua plugin for running exported Spriter animations within the Moai SDK game engine.
 
 To run, simply clone this repo as a submodule within your Moai game or project's lua folder,
