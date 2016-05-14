@@ -282,10 +282,11 @@ function animHasTagAtTime(meta, anim_name, time, tag_name)
   return false
 end
 
-function getCurrentPointLocation(anim, point_name) 
-  for i, prop in orderedPairs ( anim.props ) do
+function getPointLocAndAngle(anim, point_name) 
+  for i, prop in pairs ( anim.props ) do
     if prop.name == point_name then 
-      return prop:getLoc()
+      local pointx, pointy = prop:getLoc()
+      return pointx, pointy, prop:getRot()
     end
   end
 end
