@@ -1,6 +1,6 @@
 # moai_spriter_plugin
 
-Current version 1.0.1
+Current version 1.0.2
 
 The Lua plugin for running exported Spriter animations within the Moai SDK game engine.
 

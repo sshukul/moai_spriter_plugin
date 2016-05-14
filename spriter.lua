@@ -69,9 +69,14 @@ local function createAnim ( self, name, x, y, scaleX, scaleY, reverseFlag )
         local prop = MOAIProp2D.new ()
         prop:setParent ( root )
         prop:setDeck ( self.texture )
-        prop:setPriority( curveSet.priority )
+        prop:setPriority( curveSet.priority )      
         --prop:setBlendMode( MOAIProp.GL_SRC_ALPHA, MOAIProp.GL_ONE_MINUS_SRC_ALPHA )
-        prop.name = curveSet.id.name
+        if curveSet.name ~= nil and curveSet.name ~= "" then
+          prop.name = curveSet.name
+        else
+          prop.name = curveSet.id.name
+        end
+        
         self.scaleX = 1
         self.scaleY = 1
             
@@ -132,7 +137,7 @@ function spriter(filename, deck, names)
       local animCurves = {}
       for i, object in orderedPairs ( objects ) do
         local numKeys = #object
-
+        
         -- Texture ID
         local idCurve = MOAIAnimCurve.new ()
         idCurve:reserveKeys ( numKeys )
@@ -172,46 +177,49 @@ function spriter(filename, deck, names)
   
         local prevTexture = nil
         local prevFrame = nil
+        local name = nil
         for ii, frame in orderedPairs ( object ) do
-          if frame.texture then
-            time = frame.time / 1000
-            idCurve:setKey ( ii, time, names[frame.texture], MOAIEaseType.FLAT)
-            idCurve.name = frame.texture
-            xCurve:setKey  ( ii, time, frame.x, MOAIEaseType.LINEAR)
-            yCurve:setKey  ( ii, time, frame.y, MOAIEaseType.LINEAR)
-  
-            frame.angleWithSpin = frame.angle
-            if prevFrame ~= nil then
-              if frame.angle < prevFrame.angle and prevFrame.spin == 1 then
-                frame.angleWithSpin = frame.angle + 360
-              elseif frame.angle > prevFrame.angle and prevFrame.spin == -1 then
-                frame.angleWithSpin = frame.angle - 360
-              end
-              
-              if prevFrame.angleWithSpin >= 360 and prevFrame.angle < 360 then
-                local numRotations = math.floor(math.abs(prevFrame.angleWithSpin / 360))
-                if numRotations == 0 then
-                  numRotations = 1
-                end
-                frame.angleWithSpin = frame.angleWithSpin + (360 * numRotations)
-              elseif prevFrame.angleWithSpin <= 0 and prevFrame.angle > 0 then
-                local numRotations = math.floor(math.abs(prevFrame.angleWithSpin / 360)) + 1
-                frame.angleWithSpin = frame.angleWithSpin - (360 * numRotations)
-              end
-            end
-            if frame.alpha == nil then
-              frame.alpha = 1
-            end
-
-            rCurve:setKey  ( ii, time, frame.angleWithSpin, MOAIEaseType.LINEAR)                    
-            sxCurve:setKey ( ii, time, frame.scale_x, MOAIEaseType.LINEAR)
-            syCurve:setKey ( ii, time, frame.scale_y, MOAIEaseType.LINEAR)
-            aCurve:setKey ( ii, time, frame.alpha, MOAIEaseType.LINEAR)
-            pxCurve:setKey ( ii, time, frame.pivot_x, MOAIEaseType.LINEAR )
-            pyCurve:setKey ( ii, time, frame.pivot_y, MOAIEaseType.LINEAR )
-            prevTexture = frame.texture
-            prevFrame = frame
+          time = frame.time / 1000
+          
+          if frame.name then
+            name = frame.name
           end
+          idCurve:setKey ( ii, time, names[frame.texture], MOAIEaseType.FLAT)
+          idCurve.name = frame.texture
+          xCurve:setKey  ( ii, time, frame.x, MOAIEaseType.LINEAR)
+          yCurve:setKey  ( ii, time, frame.y, MOAIEaseType.LINEAR)
+
+          frame.angleWithSpin = frame.angle
+          if prevFrame ~= nil then
+            if frame.angle < prevFrame.angle and prevFrame.spin == 1 then
+              frame.angleWithSpin = frame.angle + 360
+            elseif frame.angle > prevFrame.angle and prevFrame.spin == -1 then
+              frame.angleWithSpin = frame.angle - 360
+            end
+            
+            if prevFrame.angleWithSpin >= 360 and prevFrame.angle < 360 then
+              local numRotations = math.floor(math.abs(prevFrame.angleWithSpin / 360))
+              if numRotations == 0 then
+                numRotations = 1
+              end
+              frame.angleWithSpin = frame.angleWithSpin + (360 * numRotations)
+            elseif prevFrame.angleWithSpin <= 0 and prevFrame.angle > 0 then
+              local numRotations = math.floor(math.abs(prevFrame.angleWithSpin / 360)) + 1
+              frame.angleWithSpin = frame.angleWithSpin - (360 * numRotations)
+            end
+          end
+          if frame.alpha == nil then
+            frame.alpha = 1
+          end
+
+          rCurve:setKey  ( ii, time, frame.angleWithSpin, MOAIEaseType.LINEAR)                    
+          sxCurve:setKey ( ii, time, frame.scale_x, MOAIEaseType.LINEAR)
+          syCurve:setKey ( ii, time, frame.scale_y, MOAIEaseType.LINEAR)
+          aCurve:setKey ( ii, time, frame.alpha, MOAIEaseType.LINEAR)
+          pxCurve:setKey ( ii, time, frame.pivot_x, MOAIEaseType.LINEAR )
+          pyCurve:setKey ( ii, time, frame.pivot_y, MOAIEaseType.LINEAR )
+          prevTexture = frame.texture
+          prevFrame = frame
         end
 
         local curveSet = {}
@@ -226,6 +234,7 @@ function spriter(filename, deck, names)
         curveSet.px = pxCurve
         curveSet.py = pyCurve
         curveSet.priority = object[1].zindex
+        curveSet.name = name
         table.insert ( animCurves, i, curveSet )            
       end
       curves[anim] = animCurves
@@ -234,6 +243,7 @@ function spriter(filename, deck, names)
     sprite.curves = curves
     sprite.texture = texture
     sprite.createAnim = createAnim
+    sprite.name = name
 
     return sprite, meta
 end
@@ -270,4 +280,12 @@ function animHasTagAtTime(meta, anim_name, time, tag_name)
     end 
   end
   return false
+end
+
+function getCurrentPointLocation(anim, point_name) 
+  for i, prop in orderedPairs ( anim.props ) do
+    if prop.name == point_name then 
+      return prop:getLoc()
+    end
+  end
 end
