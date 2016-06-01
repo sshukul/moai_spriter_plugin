@@ -149,12 +149,10 @@ local function createAnim ( self, name, x, y, scaleX, scaleY, reverseFlag, noSou
       end
       local animSounds = self.sounds[name]  
       if animSounds ~= nil then      
-        --print_r(animSounds)
         for soundName, soundline in pairs ( animSounds ) do
           for i=1, table.getn(soundline) do
             local timeDiff = player:getTime()*1000 - soundline[i].time
-            if timeDiff < 15 and timeDiff > 0 then
-              
+            if timeDiff < 20 and timeDiff > 0 then
               -- You can define an override function called spriterPlaySoundOverride in you own game logic
               -- if you want to do clever things like rewriting the sound file path
               -- or playing custom sounds at run time based on the scene 
