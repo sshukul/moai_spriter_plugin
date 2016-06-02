@@ -64,7 +64,7 @@ function comparePropPriorities(a,b)
 end
 
 local function createAnim ( self, name, x, y, scaleX, scaleY, reverseFlag, noSound )
-  local layerSize = 9;
+  local layerSize = 12;
 
   local player = MOAIAnim.new ()
   player:reserveLinks ( (#self.curves[name] * layerSize) )
@@ -77,7 +77,7 @@ local function createAnim ( self, name, x, y, scaleX, scaleY, reverseFlag, noSou
     prop:setParent ( root )
     prop:setDeck ( self.texture )
     prop:setPriority( curveSet.priority )      
-    --prop:setBlendMode( MOAIProp.GL_SRC_ALPHA, MOAIProp.GL_ONE_MINUS_SRC_ALPHA )
+    --prop:setBlendMode( MOAIProp.GL_ALPHA, MOAIProp.GL_ONE_MINUS_SRC_ALPHA )
     if curveSet.name ~= nil and curveSet.name ~= "" then
       prop.name = curveSet.name
     else
@@ -96,7 +96,14 @@ local function createAnim ( self, name, x, y, scaleX, scaleY, reverseFlag, noSou
     player:setLink ( c + 6, curveSet.ys, prop, MOAITransform.ATTR_Y_SCL )
     player:setLink ( c + 7, curveSet.px, prop, MOAITransform.ATTR_X_PIV )
     player:setLink ( c + 8, curveSet.py, prop, MOAITransform.ATTR_Y_PIV )
+    
+    -- Moai uses premultiplied alpha, 
+    -- so we should multiply every color component by alpha value
     player:setLink ( c + 9, curveSet.a, prop, MOAIColor.ATTR_A_COL )
+    player:setLink ( c + 10, curveSet.a, prop, MOAIColor.ATTR_B_COL )
+    player:setLink ( c + 11, curveSet.a, prop, MOAIColor.ATTR_G_COL )
+    player:setLink ( c + 12, curveSet.a, prop, MOAIColor.ATTR_R_COL )
+    
     player:setCurve(curveSet.id)
     table.insert ( props, i, prop )
   end
