@@ -75,6 +75,13 @@ local function createAnim ( self, name, x, y, scaleX, scaleY, reverseFlag, noSou
   local root = MOAITransform.new ()
   local props = {}
   
+  local hasAlpha = false
+  for i, curveSet in orderedPairs ( self.curves[name] ) do
+    if curveSet.a ~= nil and curveSet.a ~= 1.0 then 
+      hasAlpha = true
+    end
+  end
+
   for i, curveSet in orderedPairs ( self.curves[name] ) do
     local prop = MOAIProp2D.new ()
     prop:setParent ( root )
@@ -102,8 +109,9 @@ local function createAnim ( self, name, x, y, scaleX, scaleY, reverseFlag, noSou
     
     -- Use the noAlpha flag for sprites where you are manipulating the color 
     -- manually, for example setting color black for shadows, as premultiplied
-    -- alpha manipulation will overrwrite that
-    if noAlpha == nil or noAlpha == false then
+    -- alpha manipulation will overrwrite that. hasAlpha detects if a sprite
+    -- has alpha changes or not and skips alpha manipulation in those cases
+    if (noAlpha == nil or noAlpha == false) and hasAlpha then
       -- Moai uses premultiplied alpha, 
       -- so we should multiply every color component by alpha value
       player:setLink ( c + 9, curveSet.a, prop, MOAIColor.ATTR_A_COL )
