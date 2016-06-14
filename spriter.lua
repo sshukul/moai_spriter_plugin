@@ -70,6 +70,7 @@ local function createAnim ( self, name, x, y, scaleX, scaleY, reverseFlag, noSou
   end
 
   local player = MOAIAnim.new ()
+  print("Anim " .. name .. " reserving links " .. (#self.curves[name] * layerSize) )
   player:reserveLinks ( (#self.curves[name] * layerSize) )
   
   local root = MOAITransform.new ()
@@ -143,7 +144,13 @@ local function createAnim ( self, name, x, y, scaleX, scaleY, reverseFlag, noSou
       local animCurves = self.curves[name]
       for i=1, table.getn(animCurves) do
         local curveSet = animCurves[i]
-        local currentZIndex = curveSet.z:getValueAtTime(player:getTime())
+        --if player:getTime() > player
+        local endTime = curveSet.frameTimes[table.getn(curveSet.frameTimes)]
+        local curTime = player:getTime()
+        if curTime > endTime then
+          curTime = endTime
+        end
+        local currentZIndex = curveSet.z:getValueAtTime(curTime)
         local prevZIndex = currentZIndex
         for j=1, table.getn(curveSet.frameTimes) do
           if curveSet.frameTimes[j] >= player:getTime() then
@@ -266,7 +273,7 @@ function spriter(filename, deck, names)
       local name = nil
       local frameTimes = {}
       for ii, frame in orderedPairs ( object ) do
-        time = frame.time / 1000
+        local time = frame.time / 1000
         table.insert(frameTimes, time)
         
         if frame.name then
