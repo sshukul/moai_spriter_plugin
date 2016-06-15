@@ -70,7 +70,6 @@ local function createAnim ( self, name, x, y, scaleX, scaleY, reverseFlag, noSou
   end
 
   local player = MOAIAnim.new ()
-  print("Anim " .. name .. " reserving links " .. (#self.curves[name] * layerSize) )
   player:reserveLinks ( (#self.curves[name] * layerSize) )
   
   local root = MOAITransform.new ()
@@ -144,7 +143,6 @@ local function createAnim ( self, name, x, y, scaleX, scaleY, reverseFlag, noSou
       local animCurves = self.curves[name]
       for i=1, table.getn(animCurves) do
         local curveSet = animCurves[i]
-        --if player:getTime() > player
         local endTime = curveSet.frameTimes[table.getn(curveSet.frameTimes)]
         local curTime = player:getTime()
         if curTime > endTime then
