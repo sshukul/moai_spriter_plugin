@@ -86,6 +86,7 @@ local function createAnim ( self, name, x, y, scaleX, scaleY, reverseFlag, noSou
     else
       prop.name = curveSet.id.name
     end
+    prop.texture = curveSet.id.name
     
     self.scaleX = 1
     self.scaleY = 1
@@ -205,12 +206,27 @@ function playSound(audioFileName)
   sound:play()
 end
 
-function spriter(filename, deck, names)
-  local anims = dofile ( filename )
+-- char_maps_to_apply is optional, only if you want to apply character maps
+function spriter(filename, deck, names, char_maps_to_apply)
+  local anims, charMaps = dofile ( filename )
   local curves = {}
   local texture = deck
   local meta = {}
   local sounds = {}
+  local charMapsArr = {}
+  
+  -- If we are applying any character maps, fetch and combine all of them into one
+  if char_maps_to_apply then
+    for i, charMapName in pairs ( char_maps_to_apply ) do
+      local charMap = charMaps[charMapName]
+      if charMap then
+        for j=1, table.getn(charMap) do
+          table.insert(charMapsArr, charMap[j])
+        end
+      end
+    end
+  end
+  
   for animName, animData in orderedPairs ( anims ) do
     --print("\n\nAdding animation " .. anim .. "\n\n")
     
@@ -277,8 +293,26 @@ function spriter(filename, deck, names)
         if frame.name then
           name = frame.name
         end
-        idCurve:setKey ( ii, time, names[frame.texture], MOAIEaseType.FLAT)
-        idCurve.name = frame.texture
+        
+        local texture = frame.texture 
+        for j=1, table.getn(charMapsArr) do
+          local map = charMapsArr[j]
+          if texture == map.file then 
+            if map.target_file then
+              texture = map.target_file
+            else
+              texture = nil
+            end
+          end
+        end
+        
+        if texture then 
+          idCurve:setKey ( ii, time, names[texture], MOAIEaseType.FLAT)
+          idCurve.name = texture
+        else 
+          idCurve:setKey ( ii, time, -1, MOAIEaseType.FLAT)
+          idCurve.name = ""
+        end
         xCurve:setKey  ( ii, time, frame.x, MOAIEaseType.LINEAR)
         yCurve:setKey  ( ii, time, frame.y, MOAIEaseType.LINEAR)
         zCurve:setKey  ( ii, time, frame.zindex, MOAIEaseType.FLAT)
@@ -312,7 +346,7 @@ function spriter(filename, deck, names)
         aCurve:setKey ( ii, time, frame.alpha, MOAIEaseType.LINEAR)
         pxCurve:setKey ( ii, time, frame.pivot_x, MOAIEaseType.LINEAR )
         pyCurve:setKey ( ii, time, frame.pivot_y, MOAIEaseType.LINEAR )
-        prevTexture = frame.texture
+        prevTexture = texture
         prevFrame = frame
       end
 
