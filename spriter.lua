@@ -47,6 +47,21 @@ local function insertPropsRN ( self , highestPriority )
   return highestPriority
 end
 
+function table.contains(table, element)
+  if table ~= nil then
+    for _, value in pairs(table) do
+      if type(value) == 'table' or type(element) == 'table' then
+        if table.equals(value, element) then
+         return true
+        end
+      elseif value == element then
+        return true
+      end
+    end
+  end
+  return false
+end
+
 local function removeProps ( self, layer )
   for i, v in ipairs ( self.props ) do
     layer:removeProp ( v )
@@ -63,7 +78,7 @@ function comparePropPriorities(a,b)
   end
 end
 
-local function createAnim ( self, name, x, y, scaleX, scaleY, reverseFlag, noSound, noAlpha )
+local function createAnim ( self, name, x, y, scaleX, scaleY, reverseFlag, noSound, noAlpha, objectsToSkip )
   local layerSize = 12;
   if noAlpha then
     layerSize = 8
@@ -75,47 +90,58 @@ local function createAnim ( self, name, x, y, scaleX, scaleY, reverseFlag, noSou
   local root = MOAITransform.new ()
   local props = {}
 
+  local numSkippedObjects = 0
   for i, curveSet in orderedPairs ( self.curves[name] ) do
-    local prop = MOAIProp2D.new ()
-    prop:setParent ( root )
-    prop:setDeck ( self.texture )
-    prop:setPriority( curveSet.priority )      
-    --prop:setBlendMode( MOAIProp.GL_ALPHA, MOAIProp.GL_ONE_MINUS_SRC_ALPHA )
+    local objectName
     if curveSet.name ~= nil and curveSet.name ~= "" then
-      prop.name = curveSet.name
+      objectName = curveSet.name
     else
-      prop.name = curveSet.id.name
-    end
-    prop.texture = curveSet.id.name
-    
-    self.scaleX = 1
-    self.scaleY = 1
-        
-    local c = ( i - 1 ) * layerSize
-    player:setLink ( c + 1, curveSet.id, prop, MOAIProp2D.ATTR_INDEX )
-    player:setLink ( c + 2, curveSet.x, prop, MOAITransform.ATTR_X_LOC )
-    player:setLink ( c + 3, curveSet.y, prop, MOAITransform.ATTR_Y_LOC )
-    player:setLink ( c + 4, curveSet.r, prop, MOAITransform.ATTR_Z_ROT )
-    player:setLink ( c + 5, curveSet.xs, prop, MOAITransform.ATTR_X_SCL )
-    player:setLink ( c + 6, curveSet.ys, prop, MOAITransform.ATTR_Y_SCL )
-    player:setLink ( c + 7, curveSet.px, prop, MOAITransform.ATTR_X_PIV )
-    player:setLink ( c + 8, curveSet.py, prop, MOAITransform.ATTR_Y_PIV )
-    
-    -- Use the noAlpha flag for sprites where you are manipulating the color 
-    -- manually, for example setting color black for shadows, as premultiplied
-    -- alpha manipulation will overrwrite that. hasAlpha detects if a sprite
-    -- has alpha changes or not and skips alpha manipulation in those cases
-    if (noAlpha == nil or noAlpha == false) then
-      -- Moai uses premultiplied alpha, 
-      -- so we should multiply every color component by alpha value
-      player:setLink ( c + 9, curveSet.a, prop, MOAIColor.ATTR_A_COL )
-      player:setLink ( c + 10, curveSet.a, prop, MOAIColor.ATTR_B_COL )
-      player:setLink ( c + 11, curveSet.a, prop, MOAIColor.ATTR_G_COL )
-      player:setLink ( c + 12, curveSet.a, prop, MOAIColor.ATTR_R_COL )
+      objectName = curveSet.id.name
     end
     
-    player:setCurve(curveSet.id)
-    table.insert ( props, i, prop )
+    -- Don't render objects specifically told to skip. This could be used for 
+    -- example when creating shadows of sprites using the same sprite object
+    -- but skipping certain elements that should cast shadows like sprite FX, particles etc.
+    if objectsToSkip == nil or not table.contains(objectsToSkip, objectName) then    
+      local prop = MOAIProp2D.new ()
+      prop.name = objectName
+      prop:setParent ( root )
+      prop:setDeck ( self.texture )
+      prop:setPriority( curveSet.priority )      
+      --prop:setBlendMode( MOAIProp.GL_ALPHA, MOAIProp.GL_ONE_MINUS_SRC_ALPHA )    
+      prop.texture = curveSet.id.name
+      
+      self.scaleX = 1
+      self.scaleY = 1
+          
+      local c = ( i - 1 ) * layerSize
+      player:setLink ( c + 1, curveSet.id, prop, MOAIProp2D.ATTR_INDEX )
+      player:setLink ( c + 2, curveSet.x, prop, MOAITransform.ATTR_X_LOC )
+      player:setLink ( c + 3, curveSet.y, prop, MOAITransform.ATTR_Y_LOC )
+      player:setLink ( c + 4, curveSet.r, prop, MOAITransform.ATTR_Z_ROT )
+      player:setLink ( c + 5, curveSet.xs, prop, MOAITransform.ATTR_X_SCL )
+      player:setLink ( c + 6, curveSet.ys, prop, MOAITransform.ATTR_Y_SCL )
+      player:setLink ( c + 7, curveSet.px, prop, MOAITransform.ATTR_X_PIV )
+      player:setLink ( c + 8, curveSet.py, prop, MOAITransform.ATTR_Y_PIV )
+      
+      -- Use the noAlpha flag for sprites where you are manipulating the color 
+      -- manually, for example setting color black for shadows, as premultiplied
+      -- alpha manipulation will overrwrite that. hasAlpha detects if a sprite
+      -- has alpha changes or not and skips alpha manipulation in those cases
+      if (noAlpha == nil or noAlpha == false) then
+        -- Moai uses premultiplied alpha, 
+        -- so we should multiply every color component by alpha value
+        player:setLink ( c + 9, curveSet.a, prop, MOAIColor.ATTR_A_COL )
+        player:setLink ( c + 10, curveSet.a, prop, MOAIColor.ATTR_B_COL )
+        player:setLink ( c + 11, curveSet.a, prop, MOAIColor.ATTR_G_COL )
+        player:setLink ( c + 12, curveSet.a, prop, MOAIColor.ATTR_R_COL )
+      end
+      
+      player:setCurve(curveSet.id)
+      table.insert ( props, i - numSkippedObjects, prop )
+    else
+      numSkippedObjects = numSkippedObjects + 1
+    end
   end
   table.sort(props, comparePropPriorities)
   if reverseFlag then
@@ -245,49 +271,70 @@ function spriter(filename, deck, names, char_maps_to_apply)
     for i, object in orderedPairs ( objects ) do
       local numKeys = #object
       
+      -- extraKeys is used to insert two extra curve keys at frame at time 0 and right before
+      -- the first appearance, for objects that appear mid timeline without being in the 
+      -- animation from the beginning
+      local extraKeys = 0
+      if object[1].time ~= 0 then
+        extraKeys = 2
+      end
+      
       -- Texture ID
       local idCurve = MOAIAnimCurve.new ()
-      idCurve:reserveKeys ( numKeys )
+      idCurve:reserveKeys ( numKeys + extraKeys)
 
       -- Location
       local xCurve = MOAIAnimCurve.new ()
-      xCurve:reserveKeys ( numKeys )
+      xCurve:reserveKeys ( numKeys + extraKeys)
 
       local yCurve = MOAIAnimCurve.new ()
-      yCurve:reserveKeys ( numKeys )
+      yCurve:reserveKeys ( numKeys + extraKeys)
 
       -- Z-Index
       local zCurve = MOAIAnimCurve.new ()
-      zCurve:reserveKeys ( numKeys )  
+      zCurve:reserveKeys ( numKeys + extraKeys)  
 
       -- Rotation
       local rCurve = MOAIAnimCurve.new ()
-      rCurve:reserveKeys ( numKeys )
+      rCurve:reserveKeys ( numKeys + extraKeys)
 
       -- Scale
       local sxCurve = MOAIAnimCurve.new ()
-      sxCurve:reserveKeys ( numKeys )
+      sxCurve:reserveKeys ( numKeys + extraKeys)
 
       local syCurve = MOAIAnimCurve.new ()
-      syCurve:reserveKeys ( numKeys )
+      syCurve:reserveKeys ( numKeys + extraKeys)
 
       -- Alpha
       local aCurve = MOAIAnimCurve.new ()
-      aCurve:reserveKeys ( numKeys )
+      aCurve:reserveKeys ( numKeys + extraKeys)
 
       -- Pivot
       local pxCurve = MOAIAnimCurve.new ()
-      pxCurve:reserveKeys ( numKeys )
+      pxCurve:reserveKeys ( numKeys + extraKeys)
 
       local pyCurve = MOAIAnimCurve.new ()
-      pyCurve:reserveKeys ( numKeys )
+      pyCurve:reserveKeys ( numKeys + extraKeys)
 
       local prevTexture = nil
       local prevFrame = nil
       local name = nil
       local frameTimes = {}
+      local counterExtraFrame = 0
       for ii, frame in orderedPairs ( object ) do
         local time = frame.time / 1000
+        local repeatIterations = 1
+        local repeatTime = 0
+        -- counterExtraFrame is used to insert an extra starting frame at time 0 and right before
+        -- the first appearance, for objects that appear mid timeline without being in the 
+        -- animation from the beginning
+        if ii == 1 and time ~= 0 then
+          table.insert(frameTimes, 0)
+          table.insert(frameTimes, time - .2)
+          repeatIterations = 3    
+          repeatTime = time
+          time = 0
+        end
         table.insert(frameTimes, time)
         
         if frame.name then
@@ -306,48 +353,69 @@ function spriter(filename, deck, names, char_maps_to_apply)
           end
         end
         
-        if texture then 
-          idCurve:setKey ( ii, time, names[texture], MOAIEaseType.FLAT)
-          idCurve.name = texture
-        else 
-          idCurve:setKey ( ii, time, -1, MOAIEaseType.FLAT)
-          idCurve.name = ""
-        end
-        xCurve:setKey  ( ii, time, frame.x, MOAIEaseType.LINEAR)
-        yCurve:setKey  ( ii, time, frame.y, MOAIEaseType.LINEAR)
-        zCurve:setKey  ( ii, time, frame.zindex, MOAIEaseType.FLAT)
-
-        frame.angleWithSpin = frame.angle
-        if prevFrame ~= nil then
-          if frame.angle < prevFrame.angle and prevFrame.spin == 1 then
-            frame.angleWithSpin = frame.angle + 360
-          elseif frame.angle > prevFrame.angle and prevFrame.spin == -1 then
-            frame.angleWithSpin = frame.angle - 360
+        for j=1, repeatIterations do 
+          if repeatTime ~= 0 then
+            if j < 3 then
+              frame.alpha = 0
+            end            
           end
-          
-          if prevFrame.angleWithSpin >= 360 and prevFrame.angle < 360 then
-            local numRotations = math.floor(math.abs(prevFrame.angleWithSpin / 360))
-            if numRotations == 0 then
-              numRotations = 1
+          if texture then 
+            idCurve:setKey ( ii+counterExtraFrame, time, names[texture], MOAIEaseType.FLAT)
+            idCurve.name = texture
+          else 
+            idCurve:setKey ( ii+counterExtraFrame, time, -1, MOAIEaseType.FLAT)
+            idCurve.name = ""
+          end
+          xCurve:setKey  ( ii+counterExtraFrame, time, frame.x, MOAIEaseType.LINEAR)
+          yCurve:setKey  ( ii+counterExtraFrame, time, frame.y, MOAIEaseType.LINEAR)
+          zCurve:setKey  ( ii+counterExtraFrame, time, frame.zindex, MOAIEaseType.FLAT)
+
+          frame.angleWithSpin = frame.angle
+          if prevFrame ~= nil then
+            if frame.angle < prevFrame.angle and prevFrame.spin == 1 then
+              frame.angleWithSpin = frame.angle + 360
+            elseif frame.angle > prevFrame.angle and prevFrame.spin == -1 then
+              frame.angleWithSpin = frame.angle - 360
             end
-            frame.angleWithSpin = frame.angleWithSpin + (360 * numRotations)
-          elseif prevFrame.angleWithSpin <= 0 and prevFrame.angle > 0 then
-            local numRotations = math.floor(math.abs(prevFrame.angleWithSpin / 360)) + 1
-            frame.angleWithSpin = frame.angleWithSpin - (360 * numRotations)
+            
+            if prevFrame.angleWithSpin >= 360 and prevFrame.angle < 360 then
+              local numRotations = math.floor(math.abs(prevFrame.angleWithSpin / 360))
+              if numRotations == 0 then
+                numRotations = 1
+              end
+              frame.angleWithSpin = frame.angleWithSpin + (360 * numRotations)
+            elseif prevFrame.angleWithSpin <= 0 and prevFrame.angle > 0 then
+              local numRotations = math.floor(math.abs(prevFrame.angleWithSpin / 360)) + 1
+              frame.angleWithSpin = frame.angleWithSpin - (360 * numRotations)
+            end
+          end
+          if frame.alpha == nil then
+            frame.alpha = 1
+          end
+
+          rCurve:setKey  ( ii+counterExtraFrame, time, frame.angleWithSpin, MOAIEaseType.LINEAR)                    
+          sxCurve:setKey ( ii+counterExtraFrame, time, frame.scale_x, MOAIEaseType.LINEAR)
+          syCurve:setKey ( ii+counterExtraFrame, time, frame.scale_y, MOAIEaseType.LINEAR)
+          aCurve:setKey ( ii+counterExtraFrame, time, frame.alpha, MOAIEaseType.LINEAR)
+          pxCurve:setKey ( ii+counterExtraFrame, time, frame.pivot_x, MOAIEaseType.LINEAR )
+          pyCurve:setKey ( ii+counterExtraFrame, time, frame.pivot_y, MOAIEaseType.LINEAR )
+          prevTexture = texture
+          prevFrame = frame
+          
+          if name == "baff" or name == "baff.png" then
+            print("\n\n numKeys: " .. numKeys)
+            print("aCurve:setKey ( " .. ii+counterExtraFrame .. ", " .. time .. ", " .. frame.alpha .. ", MOAIEaseType.LINEAR)")
+          end
+          if repeatTime ~= 0 then            
+            if j == 1 then
+              time = repeatTime - .2
+            else 
+              time = repeatTime
+              repeatTime = 0
+            end
+            counterExtraFrame = counterExtraFrame + 1
           end
         end
-        if frame.alpha == nil then
-          frame.alpha = 1
-        end
-
-        rCurve:setKey  ( ii, time, frame.angleWithSpin, MOAIEaseType.LINEAR)                    
-        sxCurve:setKey ( ii, time, frame.scale_x, MOAIEaseType.LINEAR)
-        syCurve:setKey ( ii, time, frame.scale_y, MOAIEaseType.LINEAR)
-        aCurve:setKey ( ii, time, frame.alpha, MOAIEaseType.LINEAR)
-        pxCurve:setKey ( ii, time, frame.pivot_x, MOAIEaseType.LINEAR )
-        pyCurve:setKey ( ii, time, frame.pivot_y, MOAIEaseType.LINEAR )
-        prevTexture = texture
-        prevFrame = frame
       end
 
       local curveSet = {}
