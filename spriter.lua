@@ -366,8 +366,28 @@ function spriter(filename, deck, names, char_maps_to_apply)
             idCurve:setKey ( ii+counterExtraFrame, time, -1, MOAIEaseType.FLAT)
             idCurve.name = ""
           end
-          xCurve:setKey  ( ii+counterExtraFrame, time, frame.x, MOAIEaseType.LINEAR)
-          yCurve:setKey  ( ii+counterExtraFrame, time, frame.y, MOAIEaseType.LINEAR)
+          
+          local easeType = MOAIEaseType.LINEAR
+          
+          if frame.curve_type ~= nil then
+            if frame.curve_type == "quadratic" then
+              if frame.c1 <= .5 then
+                easeType = MOAIEaseType.SOFT_EASE_OUT
+              else
+                easeType = MOAIEaseType.SOFT_EASE_IN
+              end
+            elseif frame.curve_type == "quartic" then
+              if frame.c1 <= .5 and frame.c2 <= .5 and frame.c3 <= .5 then
+                easeType = MOAIEaseType.EASE_OUT
+              elseif frame.c1 >= .5 and frame.c2 >= .5 and frame.c3 >= .5 then
+                easeType = MOAIEaseType.EASE_IN
+              else
+                easeType = MOAIEaseType.SMOOTH
+              end
+            end
+          end
+          xCurve:setKey  ( ii+counterExtraFrame, time, frame.x, easeType)
+          yCurve:setKey  ( ii+counterExtraFrame, time, frame.y, easeType)
           zCurve:setKey  ( ii+counterExtraFrame, time, frame.zindex, MOAIEaseType.FLAT)
 
           frame.angleWithSpin = frame.angle
@@ -393,19 +413,14 @@ function spriter(filename, deck, names, char_maps_to_apply)
             frame.alpha = 1
           end
 
-          rCurve:setKey  ( ii+counterExtraFrame, time, frame.angleWithSpin, MOAIEaseType.LINEAR)                    
-          sxCurve:setKey ( ii+counterExtraFrame, time, frame.scale_x, MOAIEaseType.LINEAR)
-          syCurve:setKey ( ii+counterExtraFrame, time, frame.scale_y, MOAIEaseType.LINEAR)
-          aCurve:setKey ( ii+counterExtraFrame, time, frame.alpha, MOAIEaseType.LINEAR)
-          pxCurve:setKey ( ii+counterExtraFrame, time, frame.pivot_x, MOAIEaseType.LINEAR )
-          pyCurve:setKey ( ii+counterExtraFrame, time, frame.pivot_y, MOAIEaseType.LINEAR )
+          rCurve:setKey  ( ii+counterExtraFrame, time, frame.angleWithSpin, easeType)                    
+          sxCurve:setKey ( ii+counterExtraFrame, time, frame.scale_x, easeType)
+          syCurve:setKey ( ii+counterExtraFrame, time, frame.scale_y, easeType)
+          aCurve:setKey ( ii+counterExtraFrame, time, frame.alpha, easeType)
+          pxCurve:setKey ( ii+counterExtraFrame, time, frame.pivot_x, easeType )
+          pyCurve:setKey ( ii+counterExtraFrame, time, frame.pivot_y, easeType )
           prevTexture = texture
-          prevFrame = frame
-          
-          if name == "baff" or name == "baff.png" then
-            print("\n\n numKeys: " .. numKeys)
-            print("aCurve:setKey ( " .. ii+counterExtraFrame .. ", " .. time .. ", " .. frame.alpha .. ", MOAIEaseType.LINEAR)")
-          end
+          prevFrame = frame          
           if repeatTime ~= 0 then            
             if j == 1 then
               time = repeatTime - .2
