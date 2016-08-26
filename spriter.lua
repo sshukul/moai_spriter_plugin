@@ -84,13 +84,14 @@ local function createAnim ( self, name, x, y, scaleX, scaleY, reverseFlag, noSou
     layerSize = 8
   end
 
-  local player = MOAIAnim.new ()
-  player:reserveLinks ( (#self.curves[name] * layerSize) )
+  local spriterAnim = MOAIAnim.new ()
+  spriterAnim:reserveLinks ( (#self.curves[name] * layerSize) )
   
   local root = MOAITransform.new ()
   local props = {}
 
   local numSkippedObjects = 0
+  local idCurveWithMostKeyframes = nil;
   for i, curveSet in orderedPairs ( self.curves[name] ) do
     local objectName
     if curveSet.name ~= nil and curveSet.name ~= "" then
@@ -115,14 +116,14 @@ local function createAnim ( self, name, x, y, scaleX, scaleY, reverseFlag, noSou
       self.scaleY = 1
           
       local c = ( i - 1 ) * layerSize
-      player:setLink ( c + 1, curveSet.id, prop, MOAIProp2D.ATTR_INDEX )
-      player:setLink ( c + 2, curveSet.x, prop, MOAITransform.ATTR_X_LOC )
-      player:setLink ( c + 3, curveSet.y, prop, MOAITransform.ATTR_Y_LOC )
-      player:setLink ( c + 4, curveSet.r, prop, MOAITransform.ATTR_Z_ROT )
-      player:setLink ( c + 5, curveSet.xs, prop, MOAITransform.ATTR_X_SCL )
-      player:setLink ( c + 6, curveSet.ys, prop, MOAITransform.ATTR_Y_SCL )
-      player:setLink ( c + 7, curveSet.px, prop, MOAITransform.ATTR_X_PIV )
-      player:setLink ( c + 8, curveSet.py, prop, MOAITransform.ATTR_Y_PIV )
+      spriterAnim:setLink ( c + 1, curveSet.id, prop, MOAIProp2D.ATTR_INDEX )
+      spriterAnim:setLink ( c + 2, curveSet.x, prop, MOAITransform.ATTR_X_LOC )
+      spriterAnim:setLink ( c + 3, curveSet.y, prop, MOAITransform.ATTR_Y_LOC )
+      spriterAnim:setLink ( c + 4, curveSet.r, prop, MOAITransform.ATTR_Z_ROT )
+      spriterAnim:setLink ( c + 5, curveSet.xs, prop, MOAITransform.ATTR_X_SCL )
+      spriterAnim:setLink ( c + 6, curveSet.ys, prop, MOAITransform.ATTR_Y_SCL )
+      spriterAnim:setLink ( c + 7, curveSet.px, prop, MOAITransform.ATTR_X_PIV )
+      spriterAnim:setLink ( c + 8, curveSet.py, prop, MOAITransform.ATTR_Y_PIV )
       
       -- Use the noAlpha flag for sprites where you are manipulating the color 
       -- manually, for example setting color black for shadows, as premultiplied
@@ -131,23 +132,26 @@ local function createAnim ( self, name, x, y, scaleX, scaleY, reverseFlag, noSou
       if (noAlpha == nil or noAlpha == false) then
         -- Moai uses premultiplied alpha, 
         -- so we should multiply every color component by alpha value
-        player:setLink ( c + 9, curveSet.a, prop, MOAIColor.ATTR_A_COL )
-        player:setLink ( c + 10, curveSet.a, prop, MOAIColor.ATTR_B_COL )
-        player:setLink ( c + 11, curveSet.a, prop, MOAIColor.ATTR_G_COL )
-        player:setLink ( c + 12, curveSet.a, prop, MOAIColor.ATTR_R_COL )
+        spriterAnim:setLink ( c + 9, curveSet.a, prop, MOAIColor.ATTR_A_COL )
+        spriterAnim:setLink ( c + 10, curveSet.a, prop, MOAIColor.ATTR_B_COL )
+        spriterAnim:setLink ( c + 11, curveSet.a, prop, MOAIColor.ATTR_G_COL )
+        spriterAnim:setLink ( c + 12, curveSet.a, prop, MOAIColor.ATTR_R_COL )
       end
       
-      player:setCurve(curveSet.id)
+      if idCurveWithMostKeyframes == nil or curveSet.id.numKeys > idCurveWithMostKeyframes.numKeys then
+        idCurveWithMostKeyframes = curveSet.id
+      end
       table.insert ( props, i - numSkippedObjects, prop )
     else
       numSkippedObjects = numSkippedObjects + 1
-    end
+    end    
   end
+  spriterAnim:setCurve(idCurveWithMostKeyframes)
   table.sort(props, comparePropPriorities)
   if reverseFlag then
-    player:setMode(MOAITimer.LOOP_REVERSE)
+    spriterAnim:setMode(MOAITimer.LOOP_REVERSE)
   else
-    player:setMode(MOAITimer.LOOP)
+    spriterAnim:setMode(MOAITimer.LOOP)
   end
 
   if scaleX and scaleY then
@@ -156,14 +160,14 @@ local function createAnim ( self, name, x, y, scaleX, scaleY, reverseFlag, noSou
   if x and y then
       root:setLoc(x, y)
   end
-  player.root = root
-  player.props = props
+  spriterAnim.root = root
+  spriterAnim.props = props
   
-  player.insertProps = insertProps
-  player.insertPropsRN = insertPropsRN
-  player.removeProps = removeProps
+  spriterAnim.insertProps = insertProps
+  spriterAnim.insertPropsRN = insertPropsRN
+  spriterAnim.removeProps = removeProps
   
-  player:apply ( 0 )
+  spriterAnim:apply ( 0 )
   
   if noSound == nil or noSound == false then
     local keyFrameFunc = function ()
@@ -171,14 +175,14 @@ local function createAnim ( self, name, x, y, scaleX, scaleY, reverseFlag, noSou
       for i=1, table.getn(animCurves) do
         local curveSet = animCurves[i]
         local endTime = curveSet.frameTimes[table.getn(curveSet.frameTimes)]
-        local curTime = player:getTime()
+        local curTime = spriterAnim:getTime()
         if curTime > endTime then
           curTime = endTime
         end
         local currentZIndex = curveSet.z:getValueAtTime(curTime)
         local prevZIndex = currentZIndex
         for j=1, table.getn(curveSet.frameTimes) do
-          if curveSet.frameTimes[j] >= player:getTime() then
+          if curveSet.frameTimes[j] >= spriterAnim:getTime() then
             if j > 2 then
               prevZIndex = curveSet.z:getValueAtTime(curveSet.frameTimes[j-2])
             else
@@ -188,9 +192,9 @@ local function createAnim ( self, name, x, y, scaleX, scaleY, reverseFlag, noSou
           end
         end
         if currentZIndex ~= prevZIndex then
-          for j, prop in ipairs ( player.props ) do
+          for j, prop in ipairs ( spriterAnim.props ) do
             if prop.name == curveSet.name then
-              prop:setPriority(player.basePriority + currentZIndex)
+              prop:setPriority(spriterAnim.basePriority + currentZIndex)
             end
           end
         end
@@ -199,7 +203,7 @@ local function createAnim ( self, name, x, y, scaleX, scaleY, reverseFlag, noSou
       if animSounds ~= nil then      
         for soundName, soundline in pairs ( animSounds ) do
           for i=1, table.getn(soundline) do
-            local timeDiff = player:getTime()*1000 - soundline[i].time
+            local timeDiff = spriterAnim:getTime()*1000 - soundline[i].time
             if timeDiff < 20 and timeDiff > 0 then
               -- You can define an override function called spriterPlaySoundOverride in you own game logic
               -- if you want to do clever things like rewriting the sound file path
@@ -215,14 +219,14 @@ local function createAnim ( self, name, x, y, scaleX, scaleY, reverseFlag, noSou
         end
       end
     end
-    player.keyFrameFunc = keyFrameFunc
+    spriterAnim.keyFrameFunc = keyFrameFunc
     -- If you add another listener for EVENT_TIMER_KEYFRAME, don't forget to 
-    -- add a call to player.keyFrameFunc() at the end if you want sounds and z-index
+    -- add a call to spriterAnim.keyFrameFunc() at the end if you want sounds and z-index
     -- changes to work
-    player:setListener(MOAITimer.EVENT_TIMER_KEYFRAME, keyFrameFunc)
+    spriterAnim:setListener(MOAITimer.EVENT_TIMER_KEYFRAME, keyFrameFunc)
   end
   
-  return player
+  return spriterAnim
 end
 
 function playSound(audioFileName)
@@ -268,6 +272,7 @@ function spriter(filename, deck, names, char_maps_to_apply)
     end
     
     local animCurves = {}
+    local frameTimes = {}
     for i, object in orderedPairs ( objects ) do
       local numKeys = #object
       
@@ -282,6 +287,7 @@ function spriter(filename, deck, names, char_maps_to_apply)
       -- Texture ID
       local idCurve = MOAIAnimCurve.new ()
       idCurve:reserveKeys ( numKeys + extraKeys)
+      idCurve.numKeys = numKeys
 
       -- Location
       local xCurve = MOAIAnimCurve.new ()
@@ -319,7 +325,6 @@ function spriter(filename, deck, names, char_maps_to_apply)
       local prevTexture = nil
       local prevFrame = nil
       local name = nil
-      local frameTimes = {}
       local counterExtraFrame = 0
       for ii, frame in orderedPairs ( object ) do
         local time = frame.time / 1000
@@ -335,7 +340,9 @@ function spriter(filename, deck, names, char_maps_to_apply)
           repeatTime = time
           time = 0
         end
-        table.insert(frameTimes, time)
+        if not table.contains(frameTimes, time) then
+          table.insert(frameTimes, time)
+        end
         
         if frame.name then
           name = frame.name
@@ -447,6 +454,7 @@ function spriter(filename, deck, names, char_maps_to_apply)
       curveSet.py = pyCurve
       curveSet.priority = object[1].zindex
       curveSet.name = name
+      table_print(frameTimes)
       curveSet.frameTimes = frameTimes
       table.insert ( animCurves, i, curveSet )            
     end
