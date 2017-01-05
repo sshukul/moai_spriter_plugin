@@ -104,7 +104,7 @@ local function createAnim ( self, name, x, y, scaleX, scaleY, reverseFlag, noSou
     -- example when creating shadows of sprites using the same sprite object
     -- but skipping certain elements that should cast shadows like sprite FX, particles etc.
     if objectsToSkip == nil or not table.contains(objectsToSkip, objectName) then    
-      local prop = MOAIProp2D.new ()
+      local prop = MOAIProp.new ()
       prop.name = objectName
       prop:setParent ( root )
       prop:setDeck ( self.texture )
@@ -116,7 +116,7 @@ local function createAnim ( self, name, x, y, scaleX, scaleY, reverseFlag, noSou
       self.scaleY = 1
           
       local c = ( i - 1 ) * layerSize
-      spriterAnim:setLink ( c + 1, curveSet.id, prop, MOAIProp2D.ATTR_INDEX )
+      spriterAnim:setLink ( c + 1, curveSet.id, prop, MOAIProp.ATTR_INDEX )
       spriterAnim:setLink ( c + 2, curveSet.x, prop, MOAITransform.ATTR_X_LOC )
       spriterAnim:setLink ( c + 3, curveSet.y, prop, MOAITransform.ATTR_Y_LOC )
       spriterAnim:setLink ( c + 4, curveSet.r, prop, MOAITransform.ATTR_Z_ROT )
