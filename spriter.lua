@@ -454,7 +454,6 @@ function spriter(filename, deck, names, char_maps_to_apply)
       curveSet.py = pyCurve
       curveSet.priority = object[1].zindex
       curveSet.name = name
-      table_print(frameTimes)
       curveSet.frameTimes = frameTimes
       table.insert ( animCurves, i, curveSet )            
     end
