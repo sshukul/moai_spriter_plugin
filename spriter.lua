@@ -229,7 +229,7 @@ local function createAnim ( self, name, x, y, scaleX, scaleY, reverseFlag, noSou
               if spriterPlaySoundOverride ~= nil then
                 spriterPlaySoundOverride(soundline[i].sound)
               else
-                --playSound(soundline[i].sound)
+                playSound(soundline[i].sound)
               end
             end
           end
