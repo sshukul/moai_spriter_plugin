@@ -27,9 +27,15 @@ local function insertPropsRN ( self , highestPriority )
   self.basePriority = nil
   for i, v in ipairs ( self.props ) do
     o = RNObject.new()
+    o.name = v.name
     o.prop = v
-    o.prop.name = v.name
     o.prop:setIndex(1)
+    if o.prop.size ~= nil then
+      o.originalWidth = o.prop.size.width
+      o.originalHeight = o.prop.size.height
+    end
+    o.pivotx = o.prop.pivotx
+    o.pivoty = o.prop.pivoty
     if highestPriority ~= nil then
       highestPriority = highestPriority + 1
       o.prop:setPriority(highestPriority)
@@ -43,6 +49,10 @@ local function insertPropsRN ( self , highestPriority )
 
     RNFactory.screen:addRNObject(o)
     table.insert ( self.rnprops, i, o )
+    local x, y = self.root:getLoc()
+    o.x = x
+    o.y = y
+    o.root = self.root
   end
   return highestPriority
 end
@@ -111,6 +121,9 @@ local function createAnim ( self, name, x, y, scaleX, scaleY, reverseFlag, noSou
       prop:setPriority( curveSet.priority )      
       --prop:setBlendMode( MOAIProp.GL_ALPHA, MOAIProp.GL_ONE_MINUS_SRC_ALPHA )    
       prop.texture = curveSet.id.name
+      prop.size = self.sizes[prop.texture]  
+      prop.pivotx = curveSet.px:getValueAtTime(0)
+      prop.pivoty = curveSet.py:getValueAtTime(0)  
       
       self.scaleX = 1
       self.scaleY = 1
@@ -171,6 +184,7 @@ local function createAnim ( self, name, x, y, scaleX, scaleY, reverseFlag, noSou
   
   if noSound == nil or noSound == false then
     local keyFrameFunc = function ()
+      --print("orig animTime: " .. spriterAnim:getTime())
       local animCurves = self.curves[name]
       for i=1, table.getn(animCurves) do
         local curveSet = animCurves[i]
@@ -204,7 +218,10 @@ local function createAnim ( self, name, x, y, scaleX, scaleY, reverseFlag, noSou
         for soundName, soundline in pairs ( animSounds ) do
           for i=1, table.getn(soundline) do
             local timeDiff = spriterAnim:getTime()*1000 - soundline[i].time
-            if timeDiff < 20 and timeDiff > 0 then
+            --print("animTime: " .. spriterAnim:getTime())
+            --print("soundline[i].time: " .. soundline[i].time)
+            --print(timeDiff)
+            if timeDiff < 120 and timeDiff > 0 then
               -- You can define an override function called spriterPlaySoundOverride in you own game logic
               -- if you want to do clever things like rewriting the sound file path
               -- or playing custom sounds at run time based on the scene 
@@ -237,7 +254,7 @@ function playSound(audioFileName)
 end
 
 -- char_maps_to_apply is optional, only if you want to apply character maps
-function spriter(filename, deck, names, char_maps_to_apply)
+function spriter(filename, deck, names, char_maps_to_apply, sizes)
   local anims, charMaps = dofile ( filename )
   local curves = {}
   local texture = deck
@@ -465,6 +482,7 @@ function spriter(filename, deck, names, char_maps_to_apply)
   sprite.createAnim = createAnim
   sprite.name = name
   sprite.sounds = sounds
+  sprite.sizes = sizes
 
   return sprite, meta
 end
