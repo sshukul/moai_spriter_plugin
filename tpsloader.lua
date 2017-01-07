@@ -6,12 +6,31 @@
 --  Distributed under CPAL license (http://www.opensource.org/licenses/cpal_1.0).
 -- 
 
-function tpsloader(lua, png)
+function tpsloader(lua, png, normal_png)
     local frames = dofile ( lua ).frames
+    -- workaround for weird bug with UVQuad that misses the first frame, so insert a dummy frame
+    table.insert(frames, 1, frames[1]) 
+    
+    local tex
+    local xtex, ytex
+    if normal_png then
+      tex = MOAIMultiTexture.new ()
+      tex:reserve ( 2 )
 
-    local tex = MOAITexture.new ()
-    tex:load ( png )
-    local xtex, ytex = tex:getSize ()
+      local diffuse = MOAITexture.new ()
+      diffuse:load ( png )
+      tex:setTexture ( 1, diffuse )
+      
+      xtex, ytex = diffuse:getSize ()
+
+      local normal = MOAITexture.new ()
+      normal:load ( normal_png )
+      tex:setTexture ( 2, normal )
+    else 
+      tex = MOAITexture.new ()
+      tex:load ( png )
+      xtex, ytex = tex:getSize ()
+    end
 
     -- Annotate the frame array with uv quads and geometry rects
     for i, frame in ipairs ( frames ) do
@@ -50,13 +69,16 @@ function tpsloader(lua, png)
     deck:setTexture ( tex )
     deck:reserve ( #frames )
     local names = {}
+    local sizes = {}
     for i, frame in ipairs ( frames ) do
         local q = frame.uvQuad
         local r = frame.geomRect
         names[frame.name] = i
+        sizes[frame.name] = frame.spriteSourceSize
         deck:setUVQuad ( i, q.x0,q.y0, q.x1,q.y1, q.x2,q.y2, q.x3,q.y3 )
         deck:setRect ( i, r.x0,r.y0, r.x1,r.y1 )
+        deck:setUVRect ( 1, 1, 1, 1, 1)
     end
 
-    return deck, names
+    return deck, names, sizes
 end
