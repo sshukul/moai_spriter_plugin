@@ -22,9 +22,12 @@ end
 
 -- This convenience function is added here for anyone using the 
 -- RapaNui framework in combination with Moai SDK
-local function insertPropsRN ( self , highestPriority )
+local function insertPropsRN ( self , highestPriority, layer, hidden )
   self.rnprops = {}
   self.basePriority = nil
+  if layer == nil then
+    layer = RNFactory.screen.layers:get(RNLayer.MAIN_LAYER)
+  end
   for i, v in ipairs ( self.props ) do
     o = RNObject.new()
     o.name = v.name
@@ -35,7 +38,7 @@ local function insertPropsRN ( self , highestPriority )
       o.originalHeight = o.prop.size.height
     end
     o.pivotx = o.prop.pivotx
-    o.pivoty = o.prop.pivoty
+    o.pivoty = o.prop.pivoty    
     if highestPriority ~= nil then
       highestPriority = highestPriority + 1
       o.prop:setPriority(highestPriority)
@@ -45,9 +48,11 @@ local function insertPropsRN ( self , highestPriority )
     end
     o:setLocatingMode(CENTERED_MODE)
     o.isAnim = true
+    if hidden then
+      o.prop:setVisible(false)
+    end
     local parentGroup = RNFactory.mainGroup
-
-    RNFactory.screen:addRNObject(o)
+    RNFactory.screen:addRNObject(o, nil, layer)
     table.insert ( self.rnprops, i, o )
     local x, y = self.root:getLoc()
     o.x = x
@@ -114,12 +119,12 @@ local function createAnim ( self, name, x, y, scaleX, scaleY, reverseFlag, noSou
     -- example when creating shadows of sprites using the same sprite object
     -- but skipping certain elements that should cast shadows like sprite FX, particles etc.
     if objectsToSkip == nil or not table.contains(objectsToSkip, objectName) then    
-      local prop = MOAIProp.new ()
+      local prop = MOAIGraphicsProp.new ()
       prop.name = objectName
       prop:setParent ( root )
       prop:setDeck ( self.texture )
       prop:setPriority( curveSet.priority )      
-      --prop:setBlendMode( MOAIProp.GL_ALPHA, MOAIProp.GL_ONE_MINUS_SRC_ALPHA )    
+      --prop:setBlendMode( MOAIGraphicsProp.GL_ALPHA, MOAIGraphicsProp.GL_ONE_MINUS_SRC_ALPHA )    
       prop.texture = curveSet.id.name
       prop.size = self.sizes[prop.texture]  
       prop.pivotx = curveSet.px:getValueAtTime(0)
@@ -129,7 +134,7 @@ local function createAnim ( self, name, x, y, scaleX, scaleY, reverseFlag, noSou
       self.scaleY = 1
           
       local c = ( i - 1 ) * layerSize
-      spriterAnim:setLink ( c + 1, curveSet.id, prop, MOAIProp.ATTR_INDEX )
+      spriterAnim:setLink ( c + 1, curveSet.id, prop, MOAIGraphicsProp.ATTR_INDEX )
       spriterAnim:setLink ( c + 2, curveSet.x, prop, MOAITransform.ATTR_X_LOC )
       spriterAnim:setLink ( c + 3, curveSet.y, prop, MOAITransform.ATTR_Y_LOC )
       spriterAnim:setLink ( c + 4, curveSet.r, prop, MOAITransform.ATTR_Z_ROT )

@@ -11,25 +11,23 @@ function tpsloader(lua, png, normal_png)
     -- workaround for weird bug with UVQuad that misses the first frame, so insert a dummy frame
     table.insert(frames, 1, frames[1]) 
     
-    local tex
-    local xtex, ytex
+        -- Construct the deck
+    local deck = MOAISpriteDeck2D.new ()
+    
     if normal_png then
-      tex = MOAIMultiTexture.new ()
-      tex:reserve ( 2 )
-
       local diffuse = MOAITexture.new ()
       diffuse:load ( png )
-      tex:setTexture ( 1, diffuse )
-      
-      xtex, ytex = diffuse:getSize ()
 
       local normal = MOAITexture.new ()
       normal:load ( normal_png )
-      tex:setTexture ( 2, normal )
-    else 
+            
+      deck:setTexture ( 1, 1, diffuse )
+      deck:setTexture ( 1, 2, normal )
+    else
       tex = MOAITexture.new ()
       tex:load ( png )
-      xtex, ytex = tex:getSize ()
+      
+      deck:setTexture ( tex )
     end
 
     -- Annotate the frame array with uv quads and geometry rects
@@ -64,10 +62,7 @@ function tpsloader(lua, png, normal_png)
         frame.geomRect = r
     end
 
-    -- Construct the deck
-    local deck = MOAIGfxQuadDeck2D.new ()
-    deck:setTexture ( tex )
-    deck:reserve ( #frames )
+    deck:reserveQuads ( #frames )
     local names = {}
     local sizes = {}
     for i, frame in ipairs ( frames ) do
