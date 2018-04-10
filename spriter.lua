@@ -224,12 +224,12 @@ local function createAnim ( self, name, x, y, scaleX, scaleY, reverseFlag, noSou
         for soundName, soundline in pairs ( animSounds ) do
           for i=1, table.getn(soundline) do
             local animTime = spriterAnim:getTime()*1000
-            local timeDiff = animTime - soundline[i].time          
+            local timeDiff = animTime - soundline[i].time 
             if lastSoundPlayedAtTime ~= nil and animTime <= lastSoundPlayedAtTime then
                -- animation has completed a loop, reset when sound was played for this frame
               lastSoundPlayedAtTime = nil
             end
-            if (lastSoundPlayedAtTime == nil or lastSoundPlayedAtTime ~= soundline[i].time) and timeDiff < 100 and timeDiff > 0 then
+            if (lastSoundPlayedAtTime == nil or lastSoundPlayedAtTime ~= soundline[i].time) and timeDiff < 200 and timeDiff > 0 then
               -- You can define an override function called spriterPlaySoundOverride in you own game logic
               -- if you want to do clever things like rewriting the sound file path
               -- or playing custom sounds at run time based on the scene 
