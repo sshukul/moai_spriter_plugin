@@ -6,7 +6,7 @@
 --  Distributed under CPAL license (http://www.opensource.org/licenses/cpal_1.0).
 -- 
 
-function tpsloader(lua, png, normal_png)
+function tpsloader(lua, png)
     local frames = dofile ( lua ).frames
     -- workaround for weird bug with UVQuad that misses the first frame, so insert a dummy frame
     table.insert(frames, 1, frames[1]) 
@@ -14,21 +14,10 @@ function tpsloader(lua, png, normal_png)
         -- Construct the deck
     local deck = MOAISpriteDeck2D.new ()
     
-    if normal_png then
-      local diffuse = MOAITexture.new ()
-      diffuse:load ( png )
-
-      local normal = MOAITexture.new ()
-      normal:load ( normal_png )
-            
-      deck:setTexture ( 1, 1, diffuse )
-      deck:setTexture ( 1, 2, normal )
-    else
-      tex = MOAITexture.new ()
-      tex:load ( png )
-      
-      deck:setTexture ( tex )
-    end
+    tex = MOAITexture.new ()
+    tex:load ( png )
+    
+    deck:setTexture ( tex )
 
     -- Annotate the frame array with uv quads and geometry rects
     for i, frame in ipairs ( frames ) do
