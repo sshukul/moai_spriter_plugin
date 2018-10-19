@@ -196,7 +196,6 @@ function spriter(filename, deck, names, char_maps_to_apply, sizes)
   local curves = {}
   local texture = deck
   local meta = {}
-  local sounds = {}
   local charMapsArr = {}
   
   -- If we are applying any character maps, fetch and combine all of them into one
@@ -220,9 +219,6 @@ function spriter(filename, deck, names, char_maps_to_apply, sizes)
       animMeta['anim'] = animName
       animMeta['meta'] = animData['meta']
       table.insert(meta, animMeta)
-    end
-    if animData['sounds'] ~= nil then
-      sounds[animName] = animData['sounds']
     end
     
     local animCurves = {}
@@ -418,7 +414,6 @@ function spriter(filename, deck, names, char_maps_to_apply, sizes)
   sprite.texture = texture
   sprite.createAnim = createAnim
   sprite.name = name
-  sprite.sounds = sounds
   sprite.sizes = sizes
 
   return sprite, meta
