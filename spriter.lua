@@ -22,9 +22,12 @@ end
 
 -- This convenience function is added here for anyone using the 
 -- RapaNui framework in combination with Moai SDK
-local function insertPropsRN ( self , highestPriority )
+local function insertPropsRN ( self , highestPriority, layer, hidden )
   self.rnprops = {}
   self.basePriority = nil
+  if layer == nil then
+    layer = RNFactory.screen.layers:get(RNLayer.MAIN_LAYER)
+  end
   for i, v in ipairs ( self.props ) do
     o = RNObject.new()
     o.name = v.name
@@ -45,9 +48,11 @@ local function insertPropsRN ( self , highestPriority )
     end
     o:setLocatingMode(CENTERED_MODE)
     o.isAnim = true
+    if hidden then
+      o.prop:setVisible(false)
+    end
     local parentGroup = RNFactory.mainGroup
-
-    RNFactory.screen:addRNObject(o)
+    RNFactory.screen:addRNObject(o, nil, layer)
     table.insert ( self.rnprops, i, o )
     local x, y = self.root:getLoc()
     o.x = x
@@ -114,12 +119,12 @@ local function createAnim ( self, name, x, y, scaleX, scaleY, reverseFlag, noSou
     -- example when creating shadows of sprites using the same sprite object
     -- but skipping certain elements that should cast shadows like sprite FX, particles etc.
     if objectsToSkip == nil or not table.contains(objectsToSkip, objectName) then    
-      local prop = MOAIProp2D.new ()
+      local prop = MOAIGraphicsProp.new ()
       prop.name = objectName
       prop:setParent ( root )
       prop:setDeck ( self.texture )
       prop:setPriority( curveSet.priority )      
-      --prop:setBlendMode( MOAIProp2D.GL_ALPHA, MOAIProp2D.GL_ONE_MINUS_SRC_ALPHA )    
+      --prop:setBlendMode( MOAIGraphicsProp.GL_ALPHA, MOAIGraphicsProp.GL_ONE_MINUS_SRC_ALPHA )    
       prop.texture = curveSet.id.name
       prop.size = self.sizes[prop.texture]  
       prop.pivotx = curveSet.px:getValueAtTime(0)
@@ -129,7 +134,7 @@ local function createAnim ( self, name, x, y, scaleX, scaleY, reverseFlag, noSou
       self.scaleY = 1
           
       local c = ( i - 1 ) * layerSize
-      spriterAnim:setLink ( c + 1, curveSet.id, prop, MOAIProp2D.ATTR_INDEX )
+      spriterAnim:setLink ( c + 1, curveSet.id, prop, MOAIGraphicsProp.ATTR_INDEX )
       spriterAnim:setLink ( c + 2, curveSet.x, prop, MOAITransform.ATTR_X_LOC )
       spriterAnim:setLink ( c + 3, curveSet.y, prop, MOAITransform.ATTR_Y_LOC )
       spriterAnim:setLink ( c + 4, curveSet.r, prop, MOAITransform.ATTR_Z_ROT )
@@ -183,6 +188,7 @@ local function createAnim ( self, name, x, y, scaleX, scaleY, reverseFlag, noSou
   spriterAnim:apply ( 0 )
   
   if noSound == nil or noSound == false then
+    lastSoundPlayedAtTime = nil
     local keyFrameFunc = function ()
       --print("orig animTime: " .. spriterAnim:getTime())
       local animCurves = self.curves[name]
@@ -217,11 +223,13 @@ local function createAnim ( self, name, x, y, scaleX, scaleY, reverseFlag, noSou
       if animSounds ~= nil then      
         for soundName, soundline in pairs ( animSounds ) do
           for i=1, table.getn(soundline) do
-            local timeDiff = spriterAnim:getTime()*1000 - soundline[i].time
-            --print("animTime: " .. spriterAnim:getTime())
-            --print("soundline[i].time: " .. soundline[i].time)
-            --print(timeDiff)
-            if timeDiff < 120 and timeDiff > 0 then
+            local animTime = spriterAnim:getTime()*1000
+            local timeDiff = animTime - soundline[i].time 
+            if lastSoundPlayedAtTime ~= nil and animTime <= lastSoundPlayedAtTime then
+               -- animation has completed a loop, reset when sound was played for this frame
+              lastSoundPlayedAtTime = nil
+            end
+            if (lastSoundPlayedAtTime == nil or lastSoundPlayedAtTime ~= soundline[i].time) and timeDiff < 200 and timeDiff > 0 then
               -- You can define an override function called spriterPlaySoundOverride in you own game logic
               -- if you want to do clever things like rewriting the sound file path
               -- or playing custom sounds at run time based on the scene 
@@ -231,6 +239,7 @@ local function createAnim ( self, name, x, y, scaleX, scaleY, reverseFlag, noSou
               else
                 playSound(soundline[i].sound)
               end
+              lastSoundPlayedAtTime = soundline[i].time
             end
           end
         end
@@ -372,7 +381,7 @@ function spriter(filename, deck, names, char_maps_to_apply, sizes)
             if map.target_file then
               texture = map.target_file
             else
-              texture = nil
+              frame.alpha = 0
             end
           end
         end
