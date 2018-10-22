@@ -381,7 +381,7 @@ function spriter(filename, deck, names, char_maps_to_apply, sizes)
             if map.target_file then
               texture = map.target_file
             else
-              texture = nil
+              frame.alpha = 0
             end
           end
         end
