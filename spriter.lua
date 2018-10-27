@@ -284,7 +284,7 @@ function spriter(filename, deck, names, char_maps_to_apply, sizes)
   end
   
   for animName, animData in orderedPairs ( anims ) do
-    --print("\n\nAdding animation " .. anim .. "\n\n")
+    --print("\n\nAdding animation " .. animName .. "\n\n")
     
     local objects = animData['objects']
     if animData['meta'] ~= nil then
@@ -306,182 +306,184 @@ function spriter(filename, deck, names, char_maps_to_apply, sizes)
       -- the first appearance, for objects that appear mid timeline without being in the 
       -- animation from the beginning
       local extraKeys = 0
-      if object[1].time ~= 0 then
-        extraKeys = 2
-      end
-      
-      -- Texture ID
-      local idCurve = MOAIAnimCurve.new ()
-      idCurve:reserveKeys ( numKeys + extraKeys)
-      idCurve.numKeys = numKeys
-
-      -- Location
-      local xCurve = MOAIAnimCurve.new ()
-      xCurve:reserveKeys ( numKeys + extraKeys)
-
-      local yCurve = MOAIAnimCurve.new ()
-      yCurve:reserveKeys ( numKeys + extraKeys)
-
-      -- Z-Index
-      local zCurve = MOAIAnimCurve.new ()
-      zCurve:reserveKeys ( numKeys + extraKeys)  
-
-      -- Rotation
-      local rCurve = MOAIAnimCurve.new ()
-      rCurve:reserveKeys ( numKeys + extraKeys)
-
-      -- Scale
-      local sxCurve = MOAIAnimCurve.new ()
-      sxCurve:reserveKeys ( numKeys + extraKeys)
-
-      local syCurve = MOAIAnimCurve.new ()
-      syCurve:reserveKeys ( numKeys + extraKeys)
-
-      -- Alpha
-      local aCurve = MOAIAnimCurve.new ()
-      aCurve:reserveKeys ( numKeys + extraKeys)
-
-      -- Pivot
-      local pxCurve = MOAIAnimCurve.new ()
-      pxCurve:reserveKeys ( numKeys + extraKeys)
-
-      local pyCurve = MOAIAnimCurve.new ()
-      pyCurve:reserveKeys ( numKeys + extraKeys)
-
-      local prevTexture = nil
-      local prevFrame = nil
-      local name = nil
-      local counterExtraFrame = 0
-      for ii, frame in orderedPairs ( object ) do
-        local time = frame.time / 1000
-        local repeatIterations = 1
-        local repeatTime = 0
-        -- counterExtraFrame is used to insert an extra starting frame at time 0 and right before
-        -- the first appearance, for objects that appear mid timeline without being in the 
-        -- animation from the beginning
-        if ii == 1 and time ~= 0 then
-          table.insert(frameTimes, 0)
-          table.insert(frameTimes, time - .2)
-          repeatIterations = 3    
-          repeatTime = time
-          time = 0
-        end
-        if not table.contains(frameTimes, time) then
-          table.insert(frameTimes, time)
+      if object[1] ~= nil then
+        if object[1].time ~= 0 then
+          extraKeys = 2
         end
         
-        if frame.name then
-          name = frame.name
-        end
-        
-        local texture = frame.texture 
-        for j=1, table.getn(charMapsArr) do
-          local map = charMapsArr[j]
-          if texture == map.file then 
-            if map.target_file then
-              texture = map.target_file
-            else
-              frame.alpha = 0
-            end
+        -- Texture ID
+        local idCurve = MOAIAnimCurve.new ()
+        idCurve:reserveKeys ( numKeys + extraKeys)
+        idCurve.numKeys = numKeys
+
+        -- Location
+        local xCurve = MOAIAnimCurve.new ()
+        xCurve:reserveKeys ( numKeys + extraKeys)
+
+        local yCurve = MOAIAnimCurve.new ()
+        yCurve:reserveKeys ( numKeys + extraKeys)
+
+        -- Z-Index
+        local zCurve = MOAIAnimCurve.new ()
+        zCurve:reserveKeys ( numKeys + extraKeys)  
+
+        -- Rotation
+        local rCurve = MOAIAnimCurve.new ()
+        rCurve:reserveKeys ( numKeys + extraKeys)
+
+        -- Scale
+        local sxCurve = MOAIAnimCurve.new ()
+        sxCurve:reserveKeys ( numKeys + extraKeys)
+
+        local syCurve = MOAIAnimCurve.new ()
+        syCurve:reserveKeys ( numKeys + extraKeys)
+
+        -- Alpha
+        local aCurve = MOAIAnimCurve.new ()
+        aCurve:reserveKeys ( numKeys + extraKeys)
+
+        -- Pivot
+        local pxCurve = MOAIAnimCurve.new ()
+        pxCurve:reserveKeys ( numKeys + extraKeys)
+
+        local pyCurve = MOAIAnimCurve.new ()
+        pyCurve:reserveKeys ( numKeys + extraKeys)
+
+        local prevTexture = nil
+        local prevFrame = nil
+        local name = nil
+        local counterExtraFrame = 0
+        for ii, frame in orderedPairs ( object ) do
+          local time = frame.time / 1000
+          local repeatIterations = 1
+          local repeatTime = 0
+          -- counterExtraFrame is used to insert an extra starting frame at time 0 and right before
+          -- the first appearance, for objects that appear mid timeline without being in the 
+          -- animation from the beginning
+          if ii == 1 and time ~= 0 then
+            table.insert(frameTimes, 0)
+            table.insert(frameTimes, time - .2)
+            repeatIterations = 3    
+            repeatTime = time
+            time = 0
           end
-        end
-        
-        for j=1, repeatIterations do 
-          if repeatTime ~= 0 then
-            if j < 3 then
-              frame.alpha = 0
-            end            
-          end
-          if texture then 
-            idCurve:setKey ( ii+counterExtraFrame, time, names[texture], MOAIEaseType.FLAT)
-            idCurve.name = texture
-          else 
-            idCurve:setKey ( ii+counterExtraFrame, time, -1, MOAIEaseType.FLAT)
-            idCurve.name = ""
+          if not table.contains(frameTimes, time) then
+            table.insert(frameTimes, time)
           end
           
-          local easeType = MOAIEaseType.LINEAR
+          if frame.name then
+            name = frame.name
+          end
           
-          if frame.curve_type ~= nil then
-            if frame.curve_type == "quadratic" then
-              if frame.c1 <= .5 then
-                easeType = MOAIEaseType.SOFT_EASE_OUT
+          local texture = frame.texture 
+          for j=1, table.getn(charMapsArr) do
+            local map = charMapsArr[j]
+            if texture == map.file then 
+              if map.target_file then
+                texture = map.target_file
               else
-                easeType = MOAIEaseType.SOFT_EASE_IN
-              end
-            elseif frame.curve_type == "quartic" then
-              if frame.c1 <= .5 and frame.c2 <= .5 and frame.c3 <= .5 then
-                easeType = MOAIEaseType.EASE_OUT
-              elseif frame.c1 >= .5 and frame.c2 >= .5 and frame.c3 >= .5 then
-                easeType = MOAIEaseType.EASE_IN
-              else
-                easeType = MOAIEaseType.SMOOTH
+                frame.alpha = 0
               end
             end
           end
-          xCurve:setKey  ( ii+counterExtraFrame, time, frame.x, easeType)
-          yCurve:setKey  ( ii+counterExtraFrame, time, frame.y, easeType)
-          zCurve:setKey  ( ii+counterExtraFrame, time, frame.zindex, MOAIEaseType.FLAT)
-
-          frame.angleWithSpin = frame.angle
-          if prevFrame ~= nil then
-            if frame.angle < prevFrame.angle and prevFrame.spin == 1 then
-              frame.angleWithSpin = frame.angle + 360
-            elseif frame.angle > prevFrame.angle and prevFrame.spin == -1 then
-              frame.angleWithSpin = frame.angle - 360
+          
+          for j=1, repeatIterations do 
+            if repeatTime ~= 0 then
+              if j < 3 then
+                frame.alpha = 0
+              end            
+            end
+            if texture then 
+              idCurve:setKey ( ii+counterExtraFrame, time, names[texture], MOAIEaseType.FLAT)
+              idCurve.name = texture
+            else 
+              idCurve:setKey ( ii+counterExtraFrame, time, -1, MOAIEaseType.FLAT)
+              idCurve.name = ""
             end
             
-            if prevFrame.angleWithSpin >= 360 and prevFrame.angle < 360 then
-              local numRotations = math.floor(math.abs(prevFrame.angleWithSpin / 360))
-              if numRotations == 0 then
-                numRotations = 1
+            local easeType = MOAIEaseType.LINEAR
+            
+            if frame.curve_type ~= nil then
+              if frame.curve_type == "quadratic" then
+                if frame.c1 <= .5 then
+                  easeType = MOAIEaseType.SOFT_EASE_OUT
+                else
+                  easeType = MOAIEaseType.SOFT_EASE_IN
+                end
+              elseif frame.curve_type == "quartic" then
+                if frame.c1 <= .5 and frame.c2 <= .5 and frame.c3 <= .5 then
+                  easeType = MOAIEaseType.EASE_OUT
+                elseif frame.c1 >= .5 and frame.c2 >= .5 and frame.c3 >= .5 then
+                  easeType = MOAIEaseType.EASE_IN
+                else
+                  easeType = MOAIEaseType.SMOOTH
+                end
               end
-              frame.angleWithSpin = frame.angleWithSpin + (360 * numRotations)
-            elseif prevFrame.angleWithSpin <= 0 and prevFrame.angle > 0 then
-              local numRotations = math.floor(math.abs(prevFrame.angleWithSpin / 360)) + 1
-              frame.angleWithSpin = frame.angleWithSpin - (360 * numRotations)
             end
-          end
-          if frame.alpha == nil then
-            frame.alpha = 1
-          end
+            xCurve:setKey  ( ii+counterExtraFrame, time, frame.x, easeType)
+            yCurve:setKey  ( ii+counterExtraFrame, time, frame.y, easeType)
+            zCurve:setKey  ( ii+counterExtraFrame, time, frame.zindex, MOAIEaseType.FLAT)
 
-          rCurve:setKey  ( ii+counterExtraFrame, time, frame.angleWithSpin, easeType)                    
-          sxCurve:setKey ( ii+counterExtraFrame, time, frame.scale_x, easeType)
-          syCurve:setKey ( ii+counterExtraFrame, time, frame.scale_y, easeType)
-          aCurve:setKey ( ii+counterExtraFrame, time, frame.alpha, easeType)
-          pxCurve:setKey ( ii+counterExtraFrame, time, frame.pivot_x, easeType )
-          pyCurve:setKey ( ii+counterExtraFrame, time, frame.pivot_y, easeType )
-          prevTexture = texture
-          prevFrame = frame          
-          if repeatTime ~= 0 then            
-            if j == 1 then
-              time = repeatTime - .2
-            else 
-              time = repeatTime
-              repeatTime = 0
+            frame.angleWithSpin = frame.angle
+            if prevFrame ~= nil then
+              if frame.angle < prevFrame.angle and prevFrame.spin == 1 then
+                frame.angleWithSpin = frame.angle + 360
+              elseif frame.angle > prevFrame.angle and prevFrame.spin == -1 then
+                frame.angleWithSpin = frame.angle - 360
+              end
+              
+              if prevFrame.angleWithSpin >= 360 and prevFrame.angle < 360 then
+                local numRotations = math.floor(math.abs(prevFrame.angleWithSpin / 360))
+                if numRotations == 0 then
+                  numRotations = 1
+                end
+                frame.angleWithSpin = frame.angleWithSpin + (360 * numRotations)
+              elseif prevFrame.angleWithSpin <= 0 and prevFrame.angle > 0 then
+                local numRotations = math.floor(math.abs(prevFrame.angleWithSpin / 360)) + 1
+                frame.angleWithSpin = frame.angleWithSpin - (360 * numRotations)
+              end
             end
-            counterExtraFrame = counterExtraFrame + 1
+            if frame.alpha == nil then
+              frame.alpha = 1
+            end
+
+            rCurve:setKey  ( ii+counterExtraFrame, time, frame.angleWithSpin, easeType)                    
+            sxCurve:setKey ( ii+counterExtraFrame, time, frame.scale_x, easeType)
+            syCurve:setKey ( ii+counterExtraFrame, time, frame.scale_y, easeType)
+            aCurve:setKey ( ii+counterExtraFrame, time, frame.alpha, easeType)
+            pxCurve:setKey ( ii+counterExtraFrame, time, frame.pivot_x, easeType )
+            pyCurve:setKey ( ii+counterExtraFrame, time, frame.pivot_y, easeType )
+            prevTexture = texture
+            prevFrame = frame          
+            if repeatTime ~= 0 then            
+              if j == 1 then
+                time = repeatTime - .2
+              else 
+                time = repeatTime
+                repeatTime = 0
+              end
+              counterExtraFrame = counterExtraFrame + 1
+            end
           end
         end
+
+        local curveSet = {}
+
+        curveSet.id = idCurve
+        curveSet.x = xCurve
+        curveSet.y = yCurve
+        curveSet.z = zCurve
+        curveSet.r = rCurve
+        curveSet.xs = sxCurve
+        curveSet.ys = syCurve
+        curveSet.a = aCurve
+        curveSet.px = pxCurve
+        curveSet.py = pyCurve
+        curveSet.priority = object[1].zindex
+        curveSet.name = name
+        curveSet.frameTimes = frameTimes
+        table.insert ( animCurves, i, curveSet )     
       end
-
-      local curveSet = {}
-
-      curveSet.id = idCurve
-      curveSet.x = xCurve
-      curveSet.y = yCurve
-      curveSet.z = zCurve
-      curveSet.r = rCurve
-      curveSet.xs = sxCurve
-      curveSet.ys = syCurve
-      curveSet.a = aCurve
-      curveSet.px = pxCurve
-      curveSet.py = pyCurve
-      curveSet.priority = object[1].zindex
-      curveSet.name = name
-      curveSet.frameTimes = frameTimes
-      table.insert ( animCurves, i, curveSet )            
     end
     curves[animName] = animCurves
   end
