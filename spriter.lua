@@ -388,10 +388,14 @@ function spriter(filename, deck, names, char_maps_to_apply, sizes)
           end
           
           for j=1, repeatIterations do 
+            if j > 1 and frame.alpha == 0 then
+              -- reset previous 0 alpha used for previous auto-inserted frame
+              frame.alpha = 1
+            end
             if repeatTime ~= 0 then
               if j < 3 then
                 frame.alpha = 0
-              end            
+              end
             end
             if texture then 
               idCurve:setKey ( ii+counterExtraFrame, time, names[texture], MOAIEaseType.FLAT)
@@ -482,7 +486,7 @@ function spriter(filename, deck, names, char_maps_to_apply, sizes)
         curveSet.priority = object[1].zindex
         curveSet.name = name
         curveSet.frameTimes = frameTimes
-        table.insert ( animCurves, i, curveSet )     
+        table.insert ( animCurves, i, curveSet )
       end
     end
     curves[animName] = animCurves
