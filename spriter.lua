@@ -199,7 +199,7 @@ local function createAnim ( self, name, x, y, scaleX, scaleY, reverseFlag, noSou
         if curTime > endTime then
           curTime = endTime
         end
-        local currentZIndex = curveSet.z:getValueAtTime(curTime)
+        local currentZIndex = spriterAnim.basePriority + curveSet.z:getValueAtTime(curTime)
         local prevZIndex = currentZIndex
         for j=1, table.getn(curveSet.frameTimes) do
           if curveSet.frameTimes[j] >= spriterAnim:getTime() then
@@ -214,7 +214,7 @@ local function createAnim ( self, name, x, y, scaleX, scaleY, reverseFlag, noSou
         if currentZIndex ~= prevZIndex then
           for j, prop in ipairs ( spriterAnim.props ) do
             if prop.name == curveSet.name then
-              prop:setPriority(spriterAnim.basePriority + currentZIndex)
+              prop:setPriority(currentZIndex)
             end
           end
         end
