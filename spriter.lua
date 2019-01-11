@@ -199,7 +199,11 @@ local function createAnim ( self, name, x, y, scaleX, scaleY, reverseFlag, noSou
         if curTime > endTime then
           curTime = endTime
         end
-        local currentZIndex = spriterAnim.basePriority + curveSet.z:getValueAtTime(curTime)
+        local basePriority = 0
+        if spriterAnim.basePriority ~= nil then
+          basePriority = spriterAnim.basePriority
+        end
+        local currentZIndex =  basePriority + curveSet.z:getValueAtTime(curTime)
         local prevZIndex = currentZIndex
         for j=1, table.getn(curveSet.frameTimes) do
           if curveSet.frameTimes[j] >= spriterAnim:getTime() then
