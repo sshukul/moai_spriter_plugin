@@ -11,7 +11,7 @@ function tpsloader(lua, png, normal_png)
     -- workaround for weird bug with UVQuad that misses the first frame, so insert a dummy frame
     table.insert(frames, 1, frames[1]) 
   
-        -- Construct the deck
+    -- Construct the deck
     local deck = MOAISpriteDeck2D.new ()
     
     if normal_png then
