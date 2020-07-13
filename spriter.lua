@@ -43,7 +43,7 @@ local function insertPropsRN ( self , highestPriority, layer, hidden )
     if (self.charMapsArr ~= nil) then
       for j=1, table.getn(self.charMapsArr) do
         local map = self.charMapsArr[j]
-        if string.startsWith(map.file, v.name) then
+        if string.startsWith(map.file, v.texture) then
           if not map.target_file then
             o.hidden = true
           end
@@ -133,6 +133,7 @@ local function createAnim ( self, name, x, y, scaleX, scaleY, reverseFlag, noSou
     if objectsToSkip == nil or not table.contains(objectsToSkip, objectName) then
       local prop = MOAIGraphicsProp.new ()
       prop.name = objectName
+      prop.texture = self.texture
       prop:setParent ( root )
       prop:setDeck ( self.texture )
       prop:setPriority( curveSet.priority )
