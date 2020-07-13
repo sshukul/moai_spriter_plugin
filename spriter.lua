@@ -1,11 +1,11 @@
--- 
+--
 --  spriter.lua
 --  sprinter-moai
---  
+--
 --  Created by Jon Baker on 2012-11-09.
 --  Extended by Saurabh Shukul
 --  Distributed under MPL-2.0 licence (http://opensource.org/licenses/MPL-2.0)
--- 
+--
 
 local texture
 local curves = {}
@@ -20,7 +20,7 @@ local function insertProps ( self, layer )
   end
 end
 
--- This convenience function is added here for anyone using the 
+-- This convenience function is added here for anyone using the
 -- RapaNui framework in combination with Moai SDK
 local function insertPropsRN ( self , highestPriority, layer, hidden )
   self.rnprops = {}
@@ -39,6 +39,18 @@ local function insertPropsRN ( self , highestPriority, layer, hidden )
     end
     o.pivotx = o.prop.pivotx
     o.pivoty = o.prop.pivoty
+
+    if (self.charMapsArr ~= nil) then
+      for j=1, table.getn(self.charMapsArr) do
+        local map = self.charMapsArr[j]
+        if string.startsWith(map.file, v.name) then
+          if not map.target_file then
+            o.hidden = true
+          end
+        end
+      end
+    end
+
     if highestPriority ~= nil then
       highestPriority = highestPriority + 1
       o.prop:setPriority(highestPriority)
@@ -88,7 +100,7 @@ function comparePropPriorities(a,b)
     return false
   elseif a == nil or a:getPriority() == nil then
     return true
-  else 
+  else
     return a:getPriority() < b:getPriority()
   end
 end
@@ -101,7 +113,7 @@ local function createAnim ( self, name, x, y, scaleX, scaleY, reverseFlag, noSou
 
   local spriterAnim = MOAIAnim.new ()
   spriterAnim:reserveLinks ( (#self.curves[name] * layerSize) )
-  
+
   local root = MOAITransform.new ()
   local props = {}
 
@@ -114,25 +126,25 @@ local function createAnim ( self, name, x, y, scaleX, scaleY, reverseFlag, noSou
     else
       objectName = curveSet.id.name
     end
-    
-    -- Don't render objects specifically told to skip. This could be used for 
+
+    -- Don't render objects specifically told to skip. This could be used for
     -- example when creating shadows of sprites using the same sprite object
     -- but skipping certain elements that should cast shadows like sprite FX, particles etc.
-    if objectsToSkip == nil or not table.contains(objectsToSkip, objectName) then    
+    if objectsToSkip == nil or not table.contains(objectsToSkip, objectName) then
       local prop = MOAIGraphicsProp.new ()
       prop.name = objectName
       prop:setParent ( root )
       prop:setDeck ( self.texture )
-      prop:setPriority( curveSet.priority )      
-      --prop:setBlendMode( MOAIGraphicsProp.GL_ALPHA, MOAIGraphicsProp.GL_ONE_MINUS_SRC_ALPHA )    
+      prop:setPriority( curveSet.priority )
+      --prop:setBlendMode( MOAIGraphicsProp.GL_ALPHA, MOAIGraphicsProp.GL_ONE_MINUS_SRC_ALPHA )
       prop.texture = curveSet.id.name
-      prop.size = self.sizes[prop.texture]  
+      prop.size = self.sizes[prop.texture]
       prop.pivotx = curveSet.px:getValueAtTime(0)
-      prop.pivoty = curveSet.py:getValueAtTime(0)  
-      
+      prop.pivoty = curveSet.py:getValueAtTime(0)
+
       self.scaleX = 1
       self.scaleY = 1
-          
+
       local c = ( i - 1 ) * layerSize
       spriterAnim:setLink ( c + 1, curveSet.id, prop, MOAIGraphicsProp.ATTR_INDEX )
       spriterAnim:setLink ( c + 2, curveSet.x, prop, MOAITransform.ATTR_X_LOC )
@@ -142,27 +154,27 @@ local function createAnim ( self, name, x, y, scaleX, scaleY, reverseFlag, noSou
       spriterAnim:setLink ( c + 6, curveSet.ys, prop, MOAITransform.ATTR_Y_SCL )
       spriterAnim:setLink ( c + 7, curveSet.px, prop, MOAITransform.ATTR_X_PIV )
       spriterAnim:setLink ( c + 8, curveSet.py, prop, MOAITransform.ATTR_Y_PIV )
-      
-      -- Use the noAlpha flag for sprites where you are manipulating the color 
+
+      -- Use the noAlpha flag for sprites where you are manipulating the color
       -- manually, for example setting color black for shadows, as premultiplied
       -- alpha manipulation will overrwrite that. hasAlpha detects if a sprite
       -- has alpha changes or not and skips alpha manipulation in those cases
       if (noAlpha == nil or noAlpha == false) then
-        -- Moai uses premultiplied alpha, 
+        -- Moai uses premultiplied alpha,
         -- so we should multiply every color component by alpha value
         spriterAnim:setLink ( c + 9, curveSet.a, prop, MOAIColor.ATTR_A_COL )
         spriterAnim:setLink ( c + 10, curveSet.a, prop, MOAIColor.ATTR_B_COL )
         spriterAnim:setLink ( c + 11, curveSet.a, prop, MOAIColor.ATTR_G_COL )
         spriterAnim:setLink ( c + 12, curveSet.a, prop, MOAIColor.ATTR_R_COL )
       end
-      
+
       if idCurveWithMostKeyframes == nil or curveSet.id.numKeys > idCurveWithMostKeyframes.numKeys then
         idCurveWithMostKeyframes = curveSet.id
       end
       table.insert ( props, i - numSkippedObjects, prop )
     else
       numSkippedObjects = numSkippedObjects + 1
-    end    
+    end
   end
   spriterAnim:setCurve(idCurveWithMostKeyframes)
   table.sort(props, comparePropPriorities)
@@ -180,13 +192,13 @@ local function createAnim ( self, name, x, y, scaleX, scaleY, reverseFlag, noSou
   end
   spriterAnim.root = root
   spriterAnim.props = props
-  
+
   spriterAnim.insertProps = insertProps
   spriterAnim.insertPropsRN = insertPropsRN
   spriterAnim.removeProps = removeProps
-  
+
   spriterAnim:apply ( 0 )
-  
+
   if noSound == nil or noSound == false then
     lastSoundPlayedAtTime = nil
     local keyFrameFunc = function ()
@@ -223,12 +235,12 @@ local function createAnim ( self, name, x, y, scaleX, scaleY, reverseFlag, noSou
           end
         end
       end
-      local animSounds = self.sounds[name]  
-      if animSounds ~= nil then      
+      local animSounds = self.sounds[name]
+      if animSounds ~= nil then
         for soundName, soundline in pairs ( animSounds ) do
           for i=1, table.getn(soundline) do
             local animTime = spriterAnim:getTime()*1000
-            local timeDiff = animTime - soundline[i].time 
+            local timeDiff = animTime - soundline[i].time
             if lastSoundPlayedAtTime ~= nil and animTime <= lastSoundPlayedAtTime then
                -- animation has completed a loop, reset when sound was played for this frame
               lastSoundPlayedAtTime = nil
@@ -236,7 +248,7 @@ local function createAnim ( self, name, x, y, scaleX, scaleY, reverseFlag, noSou
             if (lastSoundPlayedAtTime == nil or lastSoundPlayedAtTime ~= soundline[i].time) and timeDiff < 200 and timeDiff > 0 then
               -- You can define an override function called spriterPlaySoundOverride in you own game logic
               -- if you want to do clever things like rewriting the sound file path
-              -- or playing custom sounds at run time based on the scene 
+              -- or playing custom sounds at run time based on the scene
               -- (eg: replacing "footstep.wav" with "audio/footstep_beach.ogg" or something)
               if spriterPlaySoundOverride ~= nil then
                 spriterPlaySoundOverride(soundline[i].sound)
@@ -250,18 +262,19 @@ local function createAnim ( self, name, x, y, scaleX, scaleY, reverseFlag, noSou
       end
     end
     spriterAnim.keyFrameFunc = keyFrameFunc
-    -- If you add another listener for EVENT_TIMER_KEYFRAME, don't forget to 
+    -- If you add another listener for EVENT_TIMER_KEYFRAME, don't forget to
     -- add a call to spriterAnim.keyFrameFunc() at the end if you want sounds and z-index
     -- changes to work
     spriterAnim:setListener(MOAITimer.EVENT_TIMER_KEYFRAME, keyFrameFunc)
   end
-  
+  spriterAnim.charMapsArr = self.charMapsArr
+
   return spriterAnim
 end
 
 function playSound(audioFileName)
   local sound = MOAIUntzSound.new()
-  sound:load(audioFileName)   
+  sound:load(audioFileName)
   sound:setLooping(false)
   sound:play()
 end
@@ -274,7 +287,7 @@ function spriter(filename, deck, names, char_maps_to_apply, sizes)
   local meta = {}
   local sounds = {}
   local charMapsArr = {}
-  
+
   -- If we are applying any character maps, fetch and combine all of them into one
   if char_maps_to_apply then
     for i, charMapName in pairs ( char_maps_to_apply ) do
@@ -286,10 +299,10 @@ function spriter(filename, deck, names, char_maps_to_apply, sizes)
       end
     end
   end
-  
+
   for animName, animData in orderedPairs ( anims ) do
     --print("\n\nAdding animation " .. animName .. "\n\n")
-    
+
     local objects = animData['objects']
     if animData['meta'] ~= nil then
       local animMeta = {}
@@ -300,21 +313,21 @@ function spriter(filename, deck, names, char_maps_to_apply, sizes)
     if animData['sounds'] ~= nil then
       sounds[animName] = animData['sounds']
     end
-    
+
     local animCurves = {}
     local frameTimes = {}
     for i, object in orderedPairs ( objects ) do
       local numKeys = #object
-      
+
       -- extraKeys is used to insert two extra curve keys at frame at time 0 and right before
-      -- the first appearance, for objects that appear mid timeline without being in the 
+      -- the first appearance, for objects that appear mid timeline without being in the
       -- animation from the beginning
       local extraKeys = 0
       if object[1] ~= nil then
         if object[1].time ~= 0 then
           extraKeys = 2
         end
-        
+
         -- Texture ID
         local idCurve = MOAIAnimCurve.new ()
         idCurve:reserveKeys ( numKeys + extraKeys)
@@ -329,7 +342,7 @@ function spriter(filename, deck, names, char_maps_to_apply, sizes)
 
         -- Z-Index
         local zCurve = MOAIAnimCurve.new ()
-        zCurve:reserveKeys ( numKeys + extraKeys)  
+        zCurve:reserveKeys ( numKeys + extraKeys)
 
         -- Rotation
         local rCurve = MOAIAnimCurve.new ()
@@ -362,27 +375,27 @@ function spriter(filename, deck, names, char_maps_to_apply, sizes)
           local repeatIterations = 1
           local repeatTime = 0
           -- counterExtraFrame is used to insert an extra starting frame at time 0 and right before
-          -- the first appearance, for objects that appear mid timeline without being in the 
+          -- the first appearance, for objects that appear mid timeline without being in the
           -- animation from the beginning
           if ii == 1 and time ~= 0 then
             table.insert(frameTimes, 0)
             table.insert(frameTimes, time - .2)
-            repeatIterations = 3    
+            repeatIterations = 3
             repeatTime = time
             time = 0
           end
           if not table.contains(frameTimes, time) then
             table.insert(frameTimes, time)
           end
-          
+
           if frame.name then
             name = frame.name
           end
-          
-          local texture = frame.texture 
+
+          local texture = frame.texture
           for j=1, table.getn(charMapsArr) do
             local map = charMapsArr[j]
-            if texture == map.file then 
+            if texture == map.file then
               if map.target_file then
                 texture = map.target_file
               else
@@ -390,8 +403,8 @@ function spriter(filename, deck, names, char_maps_to_apply, sizes)
               end
             end
           end
-          
-          for j=1, repeatIterations do 
+
+          for j=1, repeatIterations do
             if j > 1 and frame.alpha == 0 then
               -- reset previous 0 alpha used for previous auto-inserted frame
               frame.alpha = 1
@@ -401,16 +414,16 @@ function spriter(filename, deck, names, char_maps_to_apply, sizes)
                 frame.alpha = 0
               end
             end
-            if texture then 
+            if texture then
               idCurve:setKey ( ii+counterExtraFrame, time, names[texture], MOAIEaseType.FLAT)
               idCurve.name = texture
-            else 
+            else
               idCurve:setKey ( ii+counterExtraFrame, time, -1, MOAIEaseType.FLAT)
               idCurve.name = ""
             end
-            
+
             local easeType = MOAIEaseType.LINEAR
-            
+
             if frame.curve_type ~= nil then
               if frame.curve_type == "quadratic" then
                 if frame.c1 <= .5 then
@@ -439,7 +452,7 @@ function spriter(filename, deck, names, char_maps_to_apply, sizes)
               elseif frame.angle > prevFrame.angle and prevFrame.spin == -1 then
                 frame.angleWithSpin = frame.angle - 360
               end
-              
+
               if prevFrame.angleWithSpin >= 360 and prevFrame.angle < 360 then
                 local numRotations = math.floor(math.abs(prevFrame.angleWithSpin / 360))
                 if numRotations == 0 then
@@ -455,18 +468,18 @@ function spriter(filename, deck, names, char_maps_to_apply, sizes)
               frame.alpha = 1
             end
 
-            rCurve:setKey  ( ii+counterExtraFrame, time, frame.angleWithSpin, easeType)                    
+            rCurve:setKey  ( ii+counterExtraFrame, time, frame.angleWithSpin, easeType)
             sxCurve:setKey ( ii+counterExtraFrame, time, frame.scale_x, easeType)
             syCurve:setKey ( ii+counterExtraFrame, time, frame.scale_y, easeType)
             aCurve:setKey ( ii+counterExtraFrame, time, frame.alpha, easeType)
             pxCurve:setKey ( ii+counterExtraFrame, time, frame.pivot_x, easeType )
             pyCurve:setKey ( ii+counterExtraFrame, time, frame.pivot_y, easeType )
             prevTexture = texture
-            prevFrame = frame          
-            if repeatTime ~= 0 then            
+            prevFrame = frame
+            if repeatTime ~= 0 then
               if j == 1 then
                 time = repeatTime - .2
-              else 
+              else
                 time = repeatTime
                 repeatTime = 0
               end
@@ -502,6 +515,7 @@ function spriter(filename, deck, names, char_maps_to_apply, sizes)
   sprite.name = name
   sprite.sounds = sounds
   sprite.sizes = sizes
+  sprite.charMapsArr = charMapsArr
 
   return sprite, meta
 end
@@ -520,7 +534,7 @@ function getAnimTagsAtTime(meta, anim_name, time)
             return tags
           elseif tagline_time > time then
             return prevTags
-          else 
+          else
             prevTags = tags
           end
         end
@@ -530,22 +544,22 @@ function getAnimTagsAtTime(meta, anim_name, time)
   end
   return nil
 end
-  
+
 -- Helper function for animation level tags
-function animHasTagAtTime(meta, anim_name, time, tag_name) 
+function animHasTagAtTime(meta, anim_name, time, tag_name)
   local tags = getAnimTagsAtTime(meta, anim_name, time)
   for i, tag in orderedPairs ( tags ) do
     if tag == tag_name then
       return true
-    end 
+    end
   end
   return false
 end
 
 -- Helper function for action / spawn points
-function getPointLocAndAngle(anim, point_name) 
+function getPointLocAndAngle(anim, point_name)
   for i, prop in pairs ( anim.props ) do
-    if prop.name == point_name then 
+    if prop.name == point_name then
       local pointx, pointy = prop:getLoc()
       return pointx, pointy, prop:getRot()
     end
