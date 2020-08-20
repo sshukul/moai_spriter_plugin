@@ -22,7 +22,7 @@ end
 
 -- This convenience function is added here for anyone using the
 -- RapaNui framework in combination with Moai SDK
-local function insertPropsRN ( self , highestPriority, layer, hidden )
+local function insertPropsRN ( self, layer, hidden )
   self.rnprops = {}
   self.basePriority = nil
   if layer == nil then
@@ -51,13 +51,6 @@ local function insertPropsRN ( self , highestPriority, layer, hidden )
       end
     end
 
-    if highestPriority ~= nil then
-      highestPriority = highestPriority + 1
-      o.prop:setPriority(highestPriority)
-      if self.basePriority == nil then
-        self.basePriority = highestPriority
-      end
-    end
     o:setLocatingMode(CENTERED_MODE)
     o.isAnim = true
     if hidden then
@@ -71,7 +64,6 @@ local function insertPropsRN ( self , highestPriority, layer, hidden )
     o.y = y
     o.root = self.root
   end
-  return highestPriority
 end
 
 function table.contains(table, element)
