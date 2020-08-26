@@ -58,6 +58,7 @@ local function insertPropsRN ( self, layer, hidden )
     end
     local parentGroup = RNFactory.mainGroup
     RNFactory.screen:addRNObject(o, nil, layer)
+    o.layer = layer
     table.insert ( self.rnprops, i, o )
     local x, y = self.root:getLoc()
     o.x = x
