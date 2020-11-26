@@ -441,9 +441,9 @@ function spriter(filename, deck, names, char_maps_to_apply, sizes)
 
             frame.angleWithSpin = frame.angle
             if prevFrame ~= nil then
-              if frame.angle < prevFrame.angle and prevFrame.spin == 1 then
+              if frame.angle < prevFrame.angle and (prevFrame.angle - frame.angle) > 180 then
                 frame.angleWithSpin = frame.angle + 360
-              elseif frame.angle > prevFrame.angle and prevFrame.spin == -1 then
+              elseif frame.angle > prevFrame.angle and (frame.angle - prevFrame.angle) > 180 then
                 frame.angleWithSpin = frame.angle - 360
               end
 
